@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ClimateGlobe, ClimateLayer } from './components/Globe/ClimateGlobe';
 import { HeaderHUD } from './components/UI/HeaderHUD';
 import { TimeDomainSelector } from './components/UI/TimeDomainSelector';
@@ -14,6 +14,7 @@ import { LegendBar } from './components/UI/LegendBar';
 import { InteractiveEntity } from './components/Globe/HotspotsPillars';
 import { TimeDomain, SSPScenario, LiveEvent, ScientificCountryProfile } from './types/climateIntelligence';
 import { SCIENTIFIC_COUNTRY_INTELLIGENCE, getCountryProfile } from './services/countryIntelligenceService';
+import { fetchLiveDisasterEvents, clearLiveTelemetryCache } from './services/liveTelemetryService';
 import { TippingPoint } from './data/tippingPoints';
 
 export function App() {
@@ -24,12 +25,32 @@ export function App() {
   const [analyticalMode, setAnalyticalMode] = useState<AnalyticalMode>('causes');
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
 
+  // Live Telemetry state
+  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [isLoadingLive, setIsLoadingLive] = useState<boolean>(true);
+
   // Camera & Selection states
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; distance?: number } | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<InteractiveEntity | null>(null);
   const [selectedLiveEvent, setSelectedLiveEvent] = useState<LiveEvent | null>(null);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
+
+  const loadTelemetry = async () => {
+    setIsLoadingLive(true);
+    const events = await fetchLiveDisasterEvents();
+    setLiveEvents(events);
+    setIsLoadingLive(false);
+  };
+
+  useEffect(() => {
+    loadTelemetry();
+  }, []);
+
+  const handleRefreshLive = async () => {
+    clearLiveTelemetryCache();
+    await loadTelemetry();
+  };
 
   const handleSelectCountryOrHotspot = (lat: number, lng: number, distance: number = 3.5) => {
     setAutoRotate(false);
@@ -81,6 +102,7 @@ export function App() {
           setAutoRotate(false);
           setSelectedLiveEvent(ev);
         }}
+        liveEvents={liveEvents}
       />
 
       {/* Top Telemetry Header HUD */}
@@ -101,7 +123,7 @@ export function App() {
         onSelectDomain={handleTimeDomainChange}
       />
 
-      {/* Clean Left-Side Controls Cluster (Stacked vertically with ZERO overlap) */}
+      {/* Clean Left-Side Controls Cluster */}
       <div className="absolute left-3 sm:left-5 top-20 sm:top-20 z-20 flex flex-col gap-3 pointer-events-none max-h-[82vh] overflow-y-auto no-scrollbar">
         <LayerSelector
           activeLayer={activeLayer}
@@ -116,9 +138,12 @@ export function App() {
         <LegendBar activeLayer={activeLayer} />
       </div>
 
-      {/* Live Events Drawer (Exclusively on the Right Side) */}
+      {/* Live Events Drawer (Exclusively on the Right Side in LIVE mode) */}
       {timeDomain === 'live' && (
         <LiveEventsDrawer
+          events={liveEvents}
+          isLoading={isLoadingLive}
+          onRefresh={handleRefreshLive}
           onSelectEvent={(ev) => setSelectedLiveEvent(ev)}
           onLocateEvent={handleSelectCountryOrHotspot}
         />

@@ -4,19 +4,30 @@ export type SSPScenario = 'SSP1-2.6' | 'SSP2-4.5' | 'SSP5-8.5';
 
 export interface LiveEvent {
   id: string;
-  type: 'wildfire' | 'cyclone' | 'flood' | 'extreme_heat' | 'drought';
+  type: 'wildfire' | 'cyclone' | 'flood' | 'extreme_heat' | 'drought' | 'volcano';
   title: string;
   location: string;
   lat: number;
   lng: number;
-  detectedAt: string; // ISO or human string
-  source: string; // e.g. "NASA FIRMS / VIIRS (S-NPP)", "GDACS / NOAA"
-  confidence?: string; // "High (92%)", "Confirmed"
-  metricLabel: string; // "Brightness Temp", "Sustained Winds", "Affected Population"
-  metricValue: string; // "385 K", "215 km/h", "1.2M people"
+  detectedAt: string; // Human relative or exact date
+  exactUtcTimestamp: string; // Real ISO 8601 string from satellite: e.g. "2026-09-04T13:03:00Z"
+  source: string; // e.g. "NASA EONET v3 / Suomi NPP VIIRS"
+  confidence?: string; // "High (Confirmed)", "Satellite Tracked"
+  metricLabel: string; // "Localized Temp / Wind", "Sustained Winds", "Fire Radiative Power"
+  metricValue: string; // "28°C • 45 km/h", "230 km/h", etc.
   severity: 'critical' | 'extreme' | 'moderate';
   details: string;
   url?: string;
+  isLiveFetched: boolean; // true if fetched from NASA live API runtime
+
+  // Scientific Attribution Chain requested:
+  attributionChain: {
+    whyOccurred: string;
+    whatItCauses: string;
+    whatItAffects: string;
+    evidenceSensors: string;
+    confidenceLevel: string;
+  };
 }
 
 export interface HistoricalObservation {
@@ -32,8 +43,8 @@ export interface HistoricalObservation {
 export interface ProjectionScenarioData {
   ssp: SSPScenario;
   name: string;
-  tempBy2100: string; // "+1.8°C", "+2.7°C", "+4.4°C"
-  co2By2100: string; // "440 ppm", "600 ppm", "1135 ppm"
+  tempBy2100: string;
+  co2By2100: string;
   summary: string;
   assumptions: string;
   policyRelevance: string;
@@ -51,9 +62,9 @@ export interface AttributedDriver {
   percentage: number;
   annualGtCO2eq: number;
   primaryMechanism: string;
-  source: string; // e.g. "IEA World Energy Balances 2023"
-  inventoryYear: string; // "2023"
-  methodology: string; // "IPCC 2006 Guidelines, Tier 1/2 fuel combustion"
+  source: string;
+  inventoryYear: string;
+  methodology: string;
 }
 
 export interface AttributedImpact {
@@ -66,7 +77,7 @@ export interface AttributedImpact {
     humanCost: string;
   };
   observedEvidence: string;
-  citations: string; // e.g. "IPCC AR6 WGII Ch. 10; Copernicus ERA5"
+  citations: string;
 }
 
 export interface ScientificCountryProfile {
@@ -75,13 +86,13 @@ export interface ScientificCountryProfile {
   code: string;
   lat: number;
   lng: number;
-  tempAnomaly: number; // °C
-  tempAnomalySource: string; // "Copernicus ERA5 (2024)"
-  totalEmissionsGt: number; // Gt CO2e
-  emissionsSource: string; // "EDGAR v8.0 / WRI Climate Watch (2023)"
+  tempAnomaly: number;
+  tempAnomalySource: string;
+  totalEmissionsGt: number;
+  emissionsSource: string;
   emissionsPerCapitaTonnes: number;
   parisStatus: string;
-  parisAssessmentSource: string; // "Climate Action Tracker (2024)"
+  parisAssessmentSource: string;
   drivers: AttributedDriver[];
   impacts: AttributedImpact[];
   keyObservation: string;

@@ -20,6 +20,7 @@ interface ClimateGlobeProps {
   focusTarget: { lat: number; lng: number; distance?: number } | null;
   onSelectEntity: (entity: InteractiveEntity | null) => void;
   onSelectLiveEvent: (event: LiveEvent | null) => void;
+  liveEvents: LiveEvent[];
 }
 
 export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
@@ -29,7 +30,8 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   autoRotate,
   focusTarget,
   onSelectEntity,
-  onSelectLiveEvent
+  onSelectLiveEvent,
+  liveEvents
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -340,12 +342,15 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     }
   }, [selectedYear]);
 
-  // Update time domain visibility
+  // Update time domain visibility & live event meshes
   useEffect(() => {
     if (liveEventsManagerRef.current) {
       liveEventsManagerRef.current.setVisible(timeDomain === 'live');
+      if (liveEvents && liveEvents.length > 0) {
+        liveEventsManagerRef.current.updateEvents(liveEvents);
+      }
     }
-  }, [timeDomain]);
+  }, [timeDomain, liveEvents]);
 
   // Handle camera fly-to focusTarget
   useEffect(() => {

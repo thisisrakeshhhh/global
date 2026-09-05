@@ -1,44 +1,52 @@
 import * as THREE from 'three';
 import { LiveEvent } from '../../types/climateIntelligence';
-import { VERIFIED_LIVE_EVENTS } from '../../services/liveTelemetryService';
 import { latLngToVector3 } from '../../utils/geoHelpers';
 
 export class LiveEventsLayerManager {
   private group: THREE.Group;
+  private globeRadius: number;
   private animatedElements: { mesh: THREE.Mesh; type: string; baseScale: number; speed: number }[] = [];
   public interactiveObjects: { mesh: THREE.Object3D; event: LiveEvent }[] = [];
 
-  constructor(globeRadius: number = 1.95) {
+  constructor(globeRadius: number = 1.95, initialEvents: LiveEvent[] = []) {
     this.group = new THREE.Group();
-    this.buildEventPins(globeRadius);
+    this.globeRadius = globeRadius;
+    if (initialEvents.length > 0) {
+      this.updateEvents(initialEvents);
+    }
   }
 
   public getMeshGroup(): THREE.Group {
     return this.group;
   }
 
-  private buildEventPins(globeRadius: number) {
-    VERIFIED_LIVE_EVENTS.forEach((ev) => {
-      const surfacePos = latLngToVector3(ev.lat, ev.lng, globeRadius);
+  public updateEvents(events: LiveEvent[]) {
+    // Clear existing children
+    while (this.group.children.length > 0) {
+      const obj = this.group.children[0];
+      this.group.remove(obj);
+    }
+    this.animatedElements = [];
+    this.interactiveObjects = [];
+
+    events.forEach((ev) => {
+      const surfacePos = latLngToVector3(ev.lat, ev.lng, this.globeRadius);
       const normal = surfacePos.clone().normalize();
 
-      // Pick distinctive glowing visual colors based on event type
       let pinColor = 0xff5500; // Wildfire orange-red
       if (ev.type === 'cyclone') pinColor = 0x00f0ff; // Cyclone electric cyan
-      if (ev.type === 'flood') pinColor = 0x3b82f6; // Flood deep marine blue
+      if (ev.type === 'flood') pinColor = 0x3b82f6; // Flood marine blue
       if (ev.type === 'extreme_heat') pinColor = 0xff0055; // Wet-bulb magenta
+      if (ev.type === 'volcano') pinColor = 0xe11d48; // Volcano crimson
 
-      // 1. PIN MESH (Flame spire or cyclone vortex core)
+      // 1. PIN MESH
       let pinGeo: THREE.BufferGeometry;
       if (ev.type === 'cyclone') {
-        // Flat spinning vortex ring
         pinGeo = new THREE.TorusGeometry(0.045, 0.012, 12, 24);
       } else if (ev.type === 'wildfire') {
-        // Upright flame cone
         pinGeo = new THREE.ConeGeometry(0.025, 0.08, 8);
         pinGeo.translate(0, 0.04, 0);
       } else {
-        // Alert diamond
         pinGeo = new THREE.OctahedronGeometry(0.035, 0);
       }
 
