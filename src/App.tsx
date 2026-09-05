@@ -55,7 +55,6 @@ export function App() {
     }
   };
 
-  // Convert legacy entity or retrieve full scientific country profile
   let activeCountryProfile: ScientificCountryProfile | null = null;
   let activeTippingPoint: TippingPoint | null = null;
 
@@ -102,28 +101,28 @@ export function App() {
         onSelectDomain={handleTimeDomainChange}
       />
 
-      {/* Copernicus Climate Layer Switcher */}
-      <LayerSelector
-        activeLayer={activeLayer}
-        onSelectLayer={(layer) => setActiveLayer(layer)}
-      />
+      {/* Clean Left-Side Controls Cluster (Stacked vertically with ZERO overlap) */}
+      <div className="absolute left-3 sm:left-5 top-20 sm:top-20 z-20 flex flex-col gap-3 pointer-events-none max-h-[82vh] overflow-y-auto no-scrollbar">
+        <LayerSelector
+          activeLayer={activeLayer}
+          onSelectLayer={(layer) => setActiveLayer(layer)}
+        />
 
-      {/* Cause vs Impact Dual Lens */}
-      <CauseImpactToggle
-        mode={analyticalMode}
-        onToggleMode={(mode) => setAnalyticalMode(mode)}
-      />
+        <CauseImpactToggle
+          mode={analyticalMode}
+          onToggleMode={(mode) => setAnalyticalMode(mode)}
+        />
 
-      {/* Live Events Drawer (Available in LIVE mode) */}
+        <LegendBar activeLayer={activeLayer} />
+      </div>
+
+      {/* Live Events Drawer (Exclusively on the Right Side) */}
       {timeDomain === 'live' && (
         <LiveEventsDrawer
           onSelectEvent={(ev) => setSelectedLiveEvent(ev)}
           onLocateEvent={handleSelectCountryOrHotspot}
         />
       )}
-
-      {/* Data Legend */}
-      <LegendBar activeLayer={activeLayer} />
 
       {/* Domain-Aware Timeline Slider */}
       <TimelineSlider

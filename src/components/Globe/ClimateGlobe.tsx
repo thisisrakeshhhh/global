@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { createAtmosphereMesh } from './AtmosphereShader';
-import { EmissionArcsManager } from './EmissionArcs';
 import { HotspotsPillarsManager, InteractiveEntity } from './HotspotsPillars';
 import { LiveEventsLayerManager } from './LiveEventsLayer';
 import {
@@ -39,7 +37,6 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const globeGroupRef = useRef<THREE.Group | null>(null);
   const cloudsMeshRef = useRef<THREE.Mesh | null>(null);
-  const arcsManagerRef = useRef<EmissionArcsManager | null>(null);
   const hotspotsManagerRef = useRef<HotspotsPillarsManager | null>(null);
   const liveEventsManagerRef = useRef<LiveEventsLayerManager | null>(null);
 
@@ -62,7 +59,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0.1, 4.8);
+    camera.position.set(0, 0.05, 4.8);
     cameraRef.current = camera;
 
     // 2. RENDERER
@@ -70,37 +67,33 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.35;
+    renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // 3. LIGHTING
-    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.95);
+    // 3. NATURAL LIGHTING (No blown-out white glare)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.8);
-    sunLight.position.set(6, 4, 7);
+    const sunLight = new THREE.DirectionalLight(0xfffdfa, 1.6);
+    sunLight.position.set(5, 3, 6);
     scene.add(sunLight);
-
-    const spaceRimLight = new THREE.DirectionalLight(0x0284c7, 1.2);
-    spaceRimLight.position.set(-6, -2, -4);
-    scene.add(spaceRimLight);
 
     // 4. STARFIELD BACKGROUND
     const starGeo = new THREE.BufferGeometry();
-    const starCount = 2000;
+    const starCount = 1800;
     const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount * 3; i += 3) {
-      starPositions[i] = (Math.random() - 0.5) * 100;
-      starPositions[i + 1] = (Math.random() - 0.5) * 100;
-      starPositions[i + 2] = (Math.random() - 0.5) * 100;
+      starPositions[i] = (Math.random() - 0.5) * 90;
+      starPositions[i + 1] = (Math.random() - 0.5) * 90;
+      starPositions[i + 2] = (Math.random() - 0.5) * 90;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     const starMat = new THREE.PointsMaterial({
       color: 0x94a3b8,
-      size: 0.14,
+      size: 0.12,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.65
     });
     const starfield = new THREE.Points(starGeo, starMat);
     scene.add(starfield);
@@ -113,7 +106,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     scene.add(globeGroup);
     globeGroupRef.current = globeGroup;
 
-    // 6. REAL NASA EARTH TEXTURES
+    // 6. REAL NASA EARTH TEXTURES (Crisp, High-Detail)
     const textureLoader = new THREE.TextureLoader();
     const earthMap = textureLoader.load('/earth_atmos_2048.jpg');
     const earthNormal = textureLoader.load('/earth_normal_2048.jpg');
@@ -123,34 +116,34 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     const earthMat = new THREE.MeshStandardMaterial({
       map: earthMap,
       normalMap: earthNormal,
-      normalScale: new THREE.Vector2(0.85, 0.85),
+      normalScale: new THREE.Vector2(0.65, 0.65),
       roughnessMap: earthSpecular,
-      roughness: 0.45,
-      metalness: 0.15
+      roughness: 0.55,
+      metalness: 0.1
     });
     const earthMesh = new THREE.Mesh(earthGeo, earthMat);
     globeGroup.add(earthMesh);
 
     // 7. REALISTIC DYNAMIC CLOUD LAYER
     const cloudsMap = textureLoader.load('/earth_clouds_1024.png');
-    const cloudsGeo = new THREE.SphereGeometry(globeRadius * 1.008, 64, 64);
+    const cloudsGeo = new THREE.SphereGeometry(globeRadius * 1.003, 64, 64);
     const cloudsMat = new THREE.MeshStandardMaterial({
       map: cloudsMap,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.22,
       blending: THREE.AdditiveBlending
     });
     const cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
     globeGroup.add(cloudsMesh);
     cloudsMeshRef.current = cloudsMesh;
 
-    // 8. COPERNICUS THERMAL ANOMALY OVERLAY
-    const thermalGeo = new THREE.SphereGeometry(globeRadius * 1.012, 64, 64);
+    // 8. COPERNICUS THERMAL ANOMALY OVERLAY (Clings tightly to Earth surface)
+    const thermalGeo = new THREE.SphereGeometry(globeRadius * 1.002, 64, 64);
     const thermalTexture = createThermalAnomalyTexture(selectedYear);
     const thermalMat = new THREE.MeshBasicMaterial({
       map: thermalTexture,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.75,
       blending: THREE.AdditiveBlending
     });
     const thermalMesh = new THREE.Mesh(thermalGeo, thermalMat);
@@ -158,38 +151,29 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     thermalMeshRef.current = thermalMesh;
 
     // 9. POLAR ICE CAPS OVERLAY
-    const iceGeo = new THREE.SphereGeometry(globeRadius * 1.014, 64, 64);
+    const iceGeo = new THREE.SphereGeometry(globeRadius * 1.004, 64, 64);
     const iceTexture = createIceCapsTexture(selectedYear);
     const iceMat = new THREE.MeshStandardMaterial({
       map: iceTexture,
       transparent: true,
-      opacity: 0.92,
-      roughness: 0.2
+      opacity: 0.9,
+      roughness: 0.25
     });
     const iceMesh = new THREE.Mesh(iceGeo, iceMat);
     globeGroup.add(iceMesh);
     iceMeshRef.current = iceMesh;
 
-    // 10. GLOWING ATMOSPHERIC RIM
-    const atmosphereMesh = createAtmosphereMesh(globeRadius);
-    globeGroup.add(atmosphereMesh);
-
-    // 11. EMISSION ARCS
-    const arcsManager = new EmissionArcsManager(globeRadius * 1.015);
-    globeGroup.add(arcsManager.getMeshGroup());
-    arcsManagerRef.current = arcsManager;
-
-    // 12. 3D HOTSPOT PILLARS & RADAR RINGS
-    const hotspotsManager = new HotspotsPillarsManager(globeRadius * 1.015);
+    // 10. CLIMATE HOTSPOTS & MONITORING STATIONS
+    const hotspotsManager = new HotspotsPillarsManager(globeRadius * 1.005);
     globeGroup.add(hotspotsManager.getMeshGroup());
     hotspotsManagerRef.current = hotspotsManager;
 
-    // 13. LIVE SATELLITE EVENTS LAYER (NASA FIRMS, GDACS)
-    const liveEventsManager = new LiveEventsLayerManager(globeRadius * 1.016);
+    // 11. LIVE SATELLITE DISASTER EVENTS (NASA FIRMS, GDACS)
+    const liveEventsManager = new LiveEventsLayerManager(globeRadius * 1.008);
     globeGroup.add(liveEventsManager.getMeshGroup());
     liveEventsManagerRef.current = liveEventsManager;
 
-    // 14. MOUSE INTERACTION & ORBIT
+    // 12. MOUSE INTERACTION & ORBIT
     const raycaster = new THREE.Raycaster();
     const mouseCoord = new THREE.Vector2();
 
@@ -238,7 +222,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
       if (!cameraRef.current) return;
       raycaster.setFromCamera(mouseCoord, cameraRef.current);
 
-      // Check live events layer first
+      // Check live events first
       if (liveEventsManagerRef.current && liveEventsManagerRef.current.getMeshGroup().visible) {
         const eventTargets = liveEventsManagerRef.current.interactiveObjects.map((o) => o.mesh);
         const eventHits = raycaster.intersectObjects(eventTargets, true);
@@ -253,7 +237,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
         }
       }
 
-      // Check country pillars and tipping points
+      // Check climate stations and tipping points
       if (hotspotsManagerRef.current) {
         const targets = hotspotsManagerRef.current.interactiveObjects.map((o) => o.mesh);
         const intersects = raycaster.intersectObjects(targets, true);
@@ -279,7 +263,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     container.addEventListener('wheel', onWheel, { passive: false });
     container.addEventListener('click', onClick);
 
-    // 15. ANIMATION LOOP
+    // 13. ANIMATION LOOP
     let animId: number;
     const startTime = performance.now();
 
@@ -309,7 +293,6 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
         }
       }
 
-      if (arcsManagerRef.current) arcsManagerRef.current.update();
       if (hotspotsManagerRef.current) hotspotsManagerRef.current.update(elapsedTime);
       if (liveEventsManagerRef.current) liveEventsManagerRef.current.update(elapsedTime);
 
@@ -360,13 +343,9 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   // Update time domain visibility
   useEffect(() => {
     if (liveEventsManagerRef.current) {
-      // Live events are highlighted in live mode
       liveEventsManagerRef.current.setVisible(timeDomain === 'live');
     }
-    if (arcsManagerRef.current) {
-      arcsManagerRef.current.setVisible(activeLayer === 'emissions' || timeDomain === 'live' || activeLayer === 'temperature');
-    }
-  }, [timeDomain, activeLayer]);
+  }, [timeDomain]);
 
   // Handle camera fly-to focusTarget
   useEffect(() => {
@@ -377,7 +356,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     globeGroupRef.current.rotation.y = targetYRot;
     globeGroupRef.current.rotation.x = (focusTarget.lat * 0.45) * (Math.PI / 180);
 
-    cameraTargetPos.current = new THREE.Vector3(0, 0.1, distance);
+    cameraTargetPos.current = new THREE.Vector3(0, 0.05, distance);
   }, [focusTarget]);
 
   return (
