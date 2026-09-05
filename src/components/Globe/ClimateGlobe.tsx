@@ -3,29 +3,35 @@ import * as THREE from 'three';
 import { createAtmosphereMesh } from './AtmosphereShader';
 import { EmissionArcsManager } from './EmissionArcs';
 import { HotspotsPillarsManager, InteractiveEntity } from './HotspotsPillars';
+import { LiveEventsLayerManager } from './LiveEventsLayer';
 import {
   createThermalAnomalyTexture,
   createIceCapsTexture
 } from '../../utils/textureGenerator';
 import { latLngToVector3 } from '../../utils/geoHelpers';
 import { audioController } from '../../utils/audioController';
+import { TimeDomain, LiveEvent } from '../../types/climateIntelligence';
 
 export type ClimateLayer = 'temperature' | 'emissions' | 'oceans' | 'ice' | 'forests';
 
 interface ClimateGlobeProps {
   activeLayer: ClimateLayer;
+  timeDomain: TimeDomain;
   selectedYear: number;
   autoRotate: boolean;
   focusTarget: { lat: number; lng: number; distance?: number } | null;
   onSelectEntity: (entity: InteractiveEntity | null) => void;
+  onSelectLiveEvent: (event: LiveEvent | null) => void;
 }
 
 export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   activeLayer,
+  timeDomain,
   selectedYear,
   autoRotate,
   focusTarget,
-  onSelectEntity
+  onSelectEntity,
+  onSelectLiveEvent
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -35,6 +41,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   const cloudsMeshRef = useRef<THREE.Mesh | null>(null);
   const arcsManagerRef = useRef<EmissionArcsManager | null>(null);
   const hotspotsManagerRef = useRef<HotspotsPillarsManager | null>(null);
+  const liveEventsManagerRef = useRef<LiveEventsLayerManager | null>(null);
 
   const thermalMeshRef = useRef<THREE.Mesh | null>(null);
   const iceMeshRef = useRef<THREE.Mesh | null>(null);
@@ -55,7 +62,6 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    // Position camera with slight upward offset so Earth is centered gracefully
     camera.position.set(0, 0.1, 4.8);
     cameraRef.current = camera;
 
@@ -68,7 +74,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // 3. LIGHTING (Sun + Soft Atmospheric Fill)
+    // 3. LIGHTING
     const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.95);
     scene.add(ambientLight);
 
@@ -102,7 +108,6 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     // 5. GLOBE GROUP
     const globeRadius = 1.95;
     const globeGroup = new THREE.Group();
-    // Default orientation showcasing South Asia, Middle East & Europe (User Image 1)
     globeGroup.rotation.y = -Math.PI * 0.42;
     globeGroup.rotation.x = 0.22;
     scene.add(globeGroup);
@@ -141,7 +146,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
 
     // 8. COPERNICUS THERMAL ANOMALY OVERLAY
     const thermalGeo = new THREE.SphereGeometry(globeRadius * 1.012, 64, 64);
-    const thermalTexture = createThermalAnomalyTexture(2026);
+    const thermalTexture = createThermalAnomalyTexture(selectedYear);
     const thermalMat = new THREE.MeshBasicMaterial({
       map: thermalTexture,
       transparent: true,
@@ -154,7 +159,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
 
     // 9. POLAR ICE CAPS OVERLAY
     const iceGeo = new THREE.SphereGeometry(globeRadius * 1.014, 64, 64);
-    const iceTexture = createIceCapsTexture(2026);
+    const iceTexture = createIceCapsTexture(selectedYear);
     const iceMat = new THREE.MeshStandardMaterial({
       map: iceTexture,
       transparent: true,
@@ -179,7 +184,12 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     globeGroup.add(hotspotsManager.getMeshGroup());
     hotspotsManagerRef.current = hotspotsManager;
 
-    // 13. MOUSE INTERACTION & ORBIT
+    // 13. LIVE SATELLITE EVENTS LAYER (NASA FIRMS, GDACS)
+    const liveEventsManager = new LiveEventsLayerManager(globeRadius * 1.016);
+    globeGroup.add(liveEventsManager.getMeshGroup());
+    liveEventsManagerRef.current = liveEventsManager;
+
+    // 14. MOUSE INTERACTION & ORBIT
     const raycaster = new THREE.Raycaster();
     const mouseCoord = new THREE.Vector2();
 
@@ -225,22 +235,40 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
       mouseCoord.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouseCoord.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-      if (!cameraRef.current || !hotspotsManagerRef.current) return;
+      if (!cameraRef.current) return;
       raycaster.setFromCamera(mouseCoord, cameraRef.current);
 
-      const targets = hotspotsManagerRef.current.interactiveObjects.map((o) => o.mesh);
-      const intersects = raycaster.intersectObjects(targets, true);
-
-      if (intersects.length > 0) {
-        const hitMesh = intersects[0].object;
-        const found = hotspotsManagerRef.current.interactiveObjects.find((o) => o.mesh === hitMesh);
-        if (found) {
-          if (found.entity.type === 'tipping_point') {
+      // Check live events layer first
+      if (liveEventsManagerRef.current && liveEventsManagerRef.current.getMeshGroup().visible) {
+        const eventTargets = liveEventsManagerRef.current.interactiveObjects.map((o) => o.mesh);
+        const eventHits = raycaster.intersectObjects(eventTargets, true);
+        if (eventHits.length > 0) {
+          const hit = eventHits[0].object;
+          const found = liveEventsManagerRef.current.interactiveObjects.find((o) => o.mesh === hit);
+          if (found) {
             audioController.playAlarm();
-          } else {
-            audioController.playSelect();
+            onSelectLiveEvent(found.event);
+            return;
           }
-          onSelectEntity(found.entity);
+        }
+      }
+
+      // Check country pillars and tipping points
+      if (hotspotsManagerRef.current) {
+        const targets = hotspotsManagerRef.current.interactiveObjects.map((o) => o.mesh);
+        const intersects = raycaster.intersectObjects(targets, true);
+
+        if (intersects.length > 0) {
+          const hitMesh = intersects[0].object;
+          const found = hotspotsManagerRef.current.interactiveObjects.find((o) => o.mesh === hitMesh);
+          if (found) {
+            if (found.entity.type === 'tipping_point') {
+              audioController.playAlarm();
+            } else {
+              audioController.playSelect();
+            }
+            onSelectEntity(found.entity);
+          }
         }
       }
     };
@@ -251,7 +279,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     container.addEventListener('wheel', onWheel, { passive: false });
     container.addEventListener('click', onClick);
 
-    // 14. ANIMATION LOOP
+    // 15. ANIMATION LOOP
     let animId: number;
     const startTime = performance.now();
 
@@ -259,7 +287,6 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
       animId = requestAnimationFrame(animate);
       const elapsedTime = (performance.now() - startTime) * 0.001;
 
-      // Earth rotation
       if (globeGroupRef.current) {
         if (!isUserInteracting.current) {
           if (autoRotate) {
@@ -271,12 +298,10 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
         }
       }
 
-      // Cloud movement
       if (cloudsMeshRef.current) {
         cloudsMeshRef.current.rotation.y += 0.0003;
       }
 
-      // Camera lerp
       if (cameraTargetPos.current && cameraRef.current) {
         cameraRef.current.position.lerp(cameraTargetPos.current, 0.05);
         if (cameraRef.current.position.distanceTo(cameraTargetPos.current) < 0.02) {
@@ -284,9 +309,9 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
         }
       }
 
-      // Update Arcs and Hotspots
       if (arcsManagerRef.current) arcsManagerRef.current.update();
       if (hotspotsManagerRef.current) hotspotsManagerRef.current.update(elapsedTime);
+      if (liveEventsManagerRef.current) liveEventsManagerRef.current.update(elapsedTime);
 
       renderer.render(scene, camera);
     };
@@ -332,18 +357,16 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     }
   }, [selectedYear]);
 
-  // Update layer visibility
+  // Update time domain visibility
   useEffect(() => {
-    if (thermalMeshRef.current) {
-      thermalMeshRef.current.visible = activeLayer === 'temperature' || activeLayer === 'oceans' || activeLayer === 'forests';
-    }
-    if (iceMeshRef.current) {
-      iceMeshRef.current.visible = activeLayer === 'ice' || activeLayer === 'temperature';
+    if (liveEventsManagerRef.current) {
+      // Live events are highlighted in live mode
+      liveEventsManagerRef.current.setVisible(timeDomain === 'live');
     }
     if (arcsManagerRef.current) {
-      arcsManagerRef.current.setVisible(activeLayer === 'emissions' || activeLayer === 'temperature');
+      arcsManagerRef.current.setVisible(activeLayer === 'emissions' || timeDomain === 'live' || activeLayer === 'temperature');
     }
-  }, [activeLayer]);
+  }, [timeDomain, activeLayer]);
 
   // Handle camera fly-to focusTarget
   useEffect(() => {
