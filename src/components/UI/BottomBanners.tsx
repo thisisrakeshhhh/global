@@ -16,20 +16,20 @@ export const BottomBanners: React.FC<BottomBannersProps> = ({ onOpenWiki }) => {
   ];
 
   return (
-    <div className="w-full px-4 pb-3 z-20 pointer-events-auto select-none">
-      <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full">
+    <div className="w-full px-4 pb-2 z-20 pointer-events-auto select-none">
+      <div className="flex flex-col lg:flex-row items-stretch gap-2.5 w-full">
         {/* Left Card: Climate Encyclopedia (~75% width) */}
-        <div className="flex-1 lg:flex-[3] bg-white text-slate-900 rounded-2xl p-3.5 sm:p-4 shadow-2xl flex flex-wrap items-center justify-between gap-4 border border-slate-100">
+        <div className="flex-1 lg:flex-[3] bg-white text-slate-900 rounded-2xl py-2 px-3.5 shadow-2xl flex flex-wrap items-center justify-between gap-3 border border-slate-100">
           {/* Left Title & Icon */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
-              <BookOpen className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+              <BookOpen className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
                 Climate Encyclopedia
               </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-normal leading-tight mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
                 10 in-depth scientific chapters on global warming
               </p>
             </div>
@@ -66,7 +66,7 @@ export const BottomBanners: React.FC<BottomBannersProps> = ({ onOpenWiki }) => {
         </div>
 
         {/* Right Card: Climate Partner / Ad (~25% width) */}
-        <div className="flex-1 lg:flex-[1] relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 p-4 flex flex-col justify-end min-h-[76px] group cursor-pointer">
+        <div className="flex-1 lg:flex-[1] relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 p-2.5 flex flex-col justify-end min-h-[56px] group cursor-pointer">
           {/* Wind Turbines & Sky SVG Background */}
           <div className="absolute inset-0 z-0">
             <svg viewBox="0 0 400 150" preserveAspectRatio="none" className="w-full h-full">

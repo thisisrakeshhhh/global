@@ -163,28 +163,8 @@ export function App() {
 
   const handleSelectDisplayEvent = (event: DisplayEvent) => {
     setAutoRotate(false);
-    setFocusTarget({ lat: event.lat, lng: event.lng, distance: 3.4 });
-    if (event.rawItem) {
-      setSelectedAttributionItem(event.rawItem);
-    } else {
-      const synthEvent: LiveEvent = {
-        id: event.id,
-        title: `${event.title} - ${event.location}`,
-        type: event.type,
-        location: event.location,
-        lat: event.lat,
-        lng: event.lng,
-        detectedAt: event.timestamp,
-        exactUtcTimestamp: new Date().toISOString(),
-        metricLabel: event.type === 'wildfire' ? 'Fire Radiative Power' : 'Wind Speed',
-        metricValue: event.stats,
-        details: `${event.title} observed at ${event.location}. Real-time telemetry indicators: ${event.stats}.`,
-        source: event.type === 'wildfire' ? 'NASA FIRMS VIIRS' : 'NOAA National Hurricane Center',
-        severity: event.badge === 'HIGH' ? 'critical' : 'moderate',
-        isLiveFetched: true
-      };
-      setSelectedAttributionItem(synthEvent);
-    }
+    setFocusTarget({ lat: event.lat, lng: event.lng, distance: 3.2 });
+    setSelectedAttributionItem(event.rawItem);
   };
 
   const handleOpenWiki = (chapterId?: string) => {
@@ -288,6 +268,7 @@ export function App() {
             cyclonesCount={cyclones.length}
             sourcesOnlineCount={freshnessReports.filter(r => r.state !== 'NO_DATA' && r.state !== 'DELAYED').length || 4}
             lastUpdatedMinutesAgo={2}
+            isLoading={isLoadingLive}
             onOpenFreshness={() => setIsFreshnessOpen(!isFreshnessOpen)}
           />
         </div>
@@ -319,6 +300,7 @@ export function App() {
               onViewAll={() => navigateTo('datasources')}
               fireClusters={fireClusters}
               cyclones={cyclones}
+              isLoading={isLoadingLive}
             />
           </div>
         </div>

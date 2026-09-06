@@ -6,6 +6,7 @@ import {
   createThermalAnomalyTexture,
   createIceCapsTexture
 } from '../../utils/textureGenerator';
+import { createAtmosphereMesh } from './AtmosphereShader';
 import { latLngToVector3 } from '../../utils/geoHelpers';
 import { audioController } from '../../utils/audioController';
 import { 
@@ -117,17 +118,21 @@ export const ClimateGlobe = React.forwardRef<ClimateGlobeHandle, ClimateGlobePro
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.0;
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // 3. NATURAL LIGHTING (No blown-out white glare)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    // 3. CINEMATIC LIGHTING & ATMOSPHERIC CONTRAST
+    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.45);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfffdfa, 1.6);
-    sunLight.position.set(5, 3, 6);
+    const sunLight = new THREE.DirectionalLight(0xfffbf0, 1.25);
+    sunLight.position.set(5, 3, 5);
     scene.add(sunLight);
+
+    const rimLight = new THREE.DirectionalLight(0x0ea5e9, 0.4);
+    rimLight.position.set(-5, -2, -4);
+    scene.add(rimLight);
 
     // 4. STARFIELD BACKGROUND
     const starGeo = new THREE.BufferGeometry();
@@ -187,7 +192,7 @@ export const ClimateGlobe = React.forwardRef<ClimateGlobeHandle, ClimateGlobePro
     globeGroup.add(cloudsMesh);
     cloudsMeshRef.current = cloudsMesh;
 
-    // 8. COPERNICUS THERMAL ANOMALY OVERLAY (Clings tightly to Earth surface)
+    // 8. COPERNICUS THERMAL ANOMALY OVERLAY (Only visible when activeLayer === 'temperature')
     const thermalGeo = new THREE.SphereGeometry(globeRadius * 1.002, 64, 64);
     const thermalTexture = createThermalAnomalyTexture(selectedYear);
     const thermalMat = new THREE.MeshBasicMaterial({
@@ -197,10 +202,11 @@ export const ClimateGlobe = React.forwardRef<ClimateGlobeHandle, ClimateGlobePro
       blending: THREE.AdditiveBlending
     });
     const thermalMesh = new THREE.Mesh(thermalGeo, thermalMat);
+    thermalMesh.visible = (activeLayer === 'temperature');
     globeGroup.add(thermalMesh);
     thermalMeshRef.current = thermalMesh;
 
-    // 9. POLAR ICE CAPS OVERLAY
+    // 9. POLAR ICE CAPS OVERLAY (Only visible when activeLayer === 'ice')
     const iceGeo = new THREE.SphereGeometry(globeRadius * 1.004, 64, 64);
     const iceTexture = createIceCapsTexture(selectedYear);
     const iceMat = new THREE.MeshStandardMaterial({
@@ -210,8 +216,13 @@ export const ClimateGlobe = React.forwardRef<ClimateGlobeHandle, ClimateGlobePro
       roughness: 0.25
     });
     const iceMesh = new THREE.Mesh(iceGeo, iceMat);
+    iceMesh.visible = (activeLayer === 'ice');
     globeGroup.add(iceMesh);
     iceMeshRef.current = iceMesh;
+
+    // 9b. AUTHENTIC NASA ATMOSPHERE RIM GLOW
+    const atmosphereMesh = createAtmosphereMesh(globeRadius);
+    globeGroup.add(atmosphereMesh);
 
     // 10. CLIMATE HOTSPOTS & MONITORING STATIONS
     const hotspotsManager = new HotspotsPillarsManager(globeRadius * 1.005);
@@ -397,6 +408,16 @@ export const ClimateGlobe = React.forwardRef<ClimateGlobeHandle, ClimateGlobePro
       (iceMeshRef.current.material as THREE.MeshStandardMaterial).needsUpdate = true;
     }
   }, [selectedYear]);
+
+  // Sync activeLayer visibility
+  useEffect(() => {
+    if (thermalMeshRef.current) {
+      thermalMeshRef.current.visible = (activeLayer === 'temperature');
+    }
+    if (iceMeshRef.current) {
+      iceMeshRef.current.visible = (activeLayer === 'ice');
+    }
+  }, [activeLayer]);
 
   // Update time domain visibility & live telemetry meshes
   useEffect(() => {

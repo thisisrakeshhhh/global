@@ -62,36 +62,35 @@ export class LiveEventsLayerManager {
       const surfacePos = latLngToVector3(cl.lat, cl.lng, this.globeRadius);
       const normal = surfacePos.clone().normalize();
 
-      // Cluster size scaled by log(totalFRP)
-      const baseRadius = 0.016 + Math.min(0.024, Math.log10(Math.max(10, cl.totalFRP)) * 0.008);
+      // Satellite ember beacon: delicate pinpoint on globe (0.0035 - 0.0075)
+      const baseRadius = 0.0035 + Math.min(0.004, Math.log10(Math.max(1, cl.totalFRP / 50)) * 0.0018);
 
-      // Core cluster beacon
-      const clusterGeo = new THREE.SphereGeometry(baseRadius, 12, 12);
+      // Core cluster ember
+      const clusterGeo = new THREE.SphereGeometry(baseRadius, 8, 8);
       const clusterMat = new THREE.MeshBasicMaterial({
-        color: cl.totalFRP > 500 ? 0xff3700 : cl.totalFRP > 150 ? 0xff6600 : 0xffa600,
+        color: cl.totalFRP > 800 ? 0xff2200 : cl.totalFRP > 200 ? 0xff5500 : 0xff8800,
         transparent: true,
-        opacity: 0.92
+        opacity: 0.95
       });
       const clusterMesh = new THREE.Mesh(clusterGeo, clusterMat);
-      clusterMesh.position.copy(surfacePos.clone().add(normal.clone().multiplyScalar(0.008)));
+      clusterMesh.position.copy(surfacePos.clone().add(normal.clone().multiplyScalar(0.003)));
       this.group.add(clusterMesh);
 
-      // Compact thermal radiance halo (no giant hula-hoops)
-      const auraGeo = new THREE.RingGeometry(baseRadius * 1.2, baseRadius * 1.8, 16);
-      const auraMat = new THREE.MeshBasicMaterial({
-        color: 0xff4500,
-        side: THREE.DoubleSide,
+      // Delicate thermal radiance halo (soft additive glow, no giant flat rings)
+      const glowRadius = baseRadius * 1.7;
+      const glowGeo = new THREE.SphereGeometry(glowRadius, 8, 8);
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: cl.totalFRP > 500 ? 0xff3300 : 0xff6600,
         transparent: true,
-        opacity: 0.45,
+        opacity: 0.32,
         blending: THREE.AdditiveBlending
       });
-      const auraMesh = new THREE.Mesh(auraGeo, auraMat);
-      auraMesh.position.copy(surfacePos.clone().add(normal.clone().multiplyScalar(0.009)));
-      auraMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-      this.group.add(auraMesh);
+      const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+      glowMesh.position.copy(clusterMesh.position);
+      this.group.add(glowMesh);
 
-      // Invisible Raycaster Hitbox
-      const hitGeo = new THREE.SphereGeometry(baseRadius * 2.2, 8, 8);
+      // Invisible Raycaster Hitbox (large enough for comfortable clicking)
+      const hitGeo = new THREE.SphereGeometry(Math.max(0.024, baseRadius * 4.5), 8, 8);
       const hitMat = new THREE.MeshBasicMaterial({ visible: false });
       const hitMesh = new THREE.Mesh(hitGeo, hitMat);
       hitMesh.position.copy(clusterMesh.position);

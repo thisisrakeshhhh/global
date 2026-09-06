@@ -20,7 +20,7 @@ export const GlobeFloatingControls: React.FC<GlobeFloatingControlsProps> = ({
   return (
     <>
       {/* Floating Camera Controls (Right side of Globe) */}
-      <div className="absolute right-[336px] top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2 pointer-events-auto">
+      <div className="absolute right-[335px] top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2 pointer-events-auto hidden lg:flex">
         <button
           onClick={() => {
             audioController.playClick();
@@ -56,7 +56,7 @@ export const GlobeFloatingControls: React.FC<GlobeFloatingControlsProps> = ({
       </div>
 
       {/* Floating Satellite Mode Pill (Bottom Center of Globe) */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-auto select-none">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto select-none">
         <div className="bg-[#0a1224]/90 backdrop-blur-md border border-slate-700/60 rounded-full px-4 py-2 shadow-2xl flex items-center gap-3 text-xs max-w-2xl">
           {/* Pulsing indicator */}
           <span className="relative flex h-2.5 w-2.5 flex-shrink-0">

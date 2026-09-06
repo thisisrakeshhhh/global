@@ -69,17 +69,17 @@ export const ClimateLayersPanel: React.FC<ClimateLayersPanelProps> = ({
   ];
 
   return (
-    <div className="w-[280px] bg-[#0a1224]/85 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xl pointer-events-auto select-none">
+    <div className="w-[270px] bg-[#0a1224]/90 backdrop-blur-md border border-slate-800/80 rounded-2xl p-3 flex flex-col gap-2 shadow-2xl pointer-events-auto select-none max-h-[calc(100vh-210px)] overflow-y-auto no-scrollbar">
       {/* Header */}
       <div className="flex items-center gap-2 pb-1 border-b border-slate-800/60">
-        <Layers className="w-4 h-4 text-slate-300" />
-        <span className="text-sm font-bold text-white tracking-wide">
+        <Layers className="w-3.5 h-3.5 text-slate-300" />
+        <span className="text-xs font-bold text-white tracking-wide">
           Climate Layers
         </span>
       </div>
 
       {/* Layer Toggles */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-1.5">
         {layerItems.map((item) => {
           const isChecked = layers[item.key];
           return (
