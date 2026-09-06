@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, RotateCw, Sparkles, Search, Flame, Wind, RefreshCw, X } from 'lucide-react';
+import { Volume2, VolumeX, RotateCw, Sparkles, Search, Flame, Wind, Radio, RefreshCw } from 'lucide-react';
 import { audioController } from '../../utils/audioController';
 import { SCIENTIFIC_COUNTRY_INTELLIGENCE } from '../../services/countryIntelligenceService';
 import { TIPPING_POINTS } from '../../data/tippingPoints';
@@ -41,8 +41,19 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   cycloneCount = 0
 }) => {
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [utcTime, setUtcTime] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const d = new Date();
+      setUtcTime(d.toUTCString().slice(17, 25) + ' UTC');
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleToggleMute = () => {
     const muted = audioController.toggleMute();
@@ -66,140 +77,167 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
     }))
   ].filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  // Status badge styling
+  let statusBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+  let statusDotColor = 'bg-emerald-500';
+  let statusText = `🟢 LIVE SATELLITE (${syncStatus.lastSyncFormatted})`;
+
+  if (syncStatus.status === 'recent') {
+    statusBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    statusDotColor = 'bg-amber-400';
+    const minAgo = Math.floor(syncStatus.lastUpdatedSecondsAgo / 60);
+    statusText = `🟡 UPDATED ${minAgo} MIN AGO`;
+  } else if (syncStatus.status === 'delayed' || syncStatus.status === 'offline') {
+    statusBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+    statusDotColor = 'bg-rose-400';
+    statusText = '🔴 DELAYED CACHE — RECONNECTING';
+  }
+
   return (
-    <header className="absolute top-0 left-0 right-0 z-30 pointer-events-none p-3 sm:p-4 flex flex-col gap-2 font-sans">
-      <div className="flex flex-wrap items-center justify-between gap-3 pointer-events-auto">
-        {/* Left: Google Earth Style Search Bar & Brand */}
+    <header className="absolute top-0 left-0 right-0 z-30 pointer-events-none p-2.5 sm:p-3 flex flex-col gap-2 font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-3 pointer-events-auto bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl px-3.5 py-2 shadow-2xl">
+        {/* Brand & 5-Second Vital Telemetry */}
         <div className="flex items-center gap-3">
-          {/* Brand Logo */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#1e1e1e]/90 backdrop-blur-md border border-white/10 shadow-xl">
-            <span className="text-base">🌍</span>
-            <span className="font-bold text-sm tracking-tight text-white">EARTH // LIVE</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-white tracking-wider flex items-center gap-1.5">
+              <span>🌍</span>
+              <span className="bg-gradient-to-r from-cyan-400 via-sky-200 to-indigo-300 bg-clip-text text-transparent">
+                EARTH // LIVE
+              </span>
+            </span>
           </div>
 
-          {/* Search Box Pill (Google Earth Style) */}
-          <div className="relative">
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-[#1e1e1e]/90 hover:bg-[#262626] focus-within:bg-[#262626] backdrop-blur-md border border-white/10 shadow-xl transition-all w-56 sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="Search Earth (e.g. India, Arctic)..."
-                value={searchQuery}
-                onFocus={() => setIsSearchFocused(true)}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-xs text-white placeholder-slate-400 focus:outline-none"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="p-0.5 text-slate-400 hover:text-white"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Search Dropdown Results */}
-            {isSearchFocused && searchQuery && (
-              <div className="absolute top-full left-0 mt-2 w-80 bg-[#1e1e1e]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="text-[10px] uppercase font-semibold text-slate-400 px-2 py-1">Locations &amp; Hotspots</div>
-                <div className="max-h-60 overflow-y-auto divide-y divide-white/5">
-                  {filteredItems.slice(0, 6).map((item, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        audioController.playSelect();
-                        onSelectCountryOrHotspot(item.lat, item.lng, 3.5);
-                        setIsSearchFocused(false);
-                        setSearchQuery('');
-                      }}
-                      className="w-full text-left px-3 py-2 hover:bg-white/5 rounded-xl flex items-center justify-between text-xs transition"
-                    >
-                      <div>
-                        <div className="text-white font-medium">{item.name}</div>
-                        <div className="text-[10px] text-slate-400">{item.category}</div>
-                      </div>
-                      <span className="text-[11px] text-amber-400 font-mono font-medium">{item.anomaly}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Trust Status Badge */}
+          <div className={`hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadgeColor}`}>
+            <span className={`inline-block w-2 h-2 rounded-full ${statusDotColor} animate-pulse`} />
+            <span>{statusText}</span>
           </div>
         </div>
 
-        {/* Center: Planetary Vitals Bar */}
-        <div className="hidden xl:flex items-center gap-4 px-4 py-2 rounded-2xl bg-[#1e1e1e]/90 backdrop-blur-md border border-white/10 shadow-xl text-xs text-slate-300">
+        {/* 5-Second Planetary Summary Bar */}
+        <div className="hidden md:flex items-center gap-4 text-[11px] border-l border-r border-slate-800 px-4">
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">Surface Anomaly:</span>
-            <span className="font-semibold text-amber-400">+1.48°C</span>
+            <span className="text-slate-500">Surface Anomaly:</span>
+            <span className="font-bold text-amber-400">+1.48°C</span>
           </div>
-          <span className="text-slate-600">•</span>
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">Atmospheric CO₂:</span>
-            <span className="font-semibold text-sky-400">426.9 ppm</span>
+            <span className="text-slate-500">CO₂:</span>
+            <span className="font-bold text-cyan-400">426.9 ppm</span>
           </div>
-          <span className="text-slate-600">•</span>
           <div className="flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-orange-400" />
-            <span className="font-semibold text-white">{clusterCount || syncStatus.totalFiresCount} Fire Clusters</span>
+            <Flame className="w-3 h-3 text-orange-400" />
+            <span className="text-slate-500">Active Fires:</span>
+            <span className="font-bold text-orange-400">{syncStatus.totalFiresCount} detections</span>
           </div>
-          <span className="text-slate-600">•</span>
           <div className="flex items-center gap-1.5">
-            <Wind className="w-3.5 h-3.5 text-blue-400" />
-            <span className="font-semibold text-white">{cycloneCount} Storms Tracked</span>
+            <Wind className="w-3 h-3 text-cyan-400" />
+            <span className="text-slate-500">Storms:</span>
+            <span className="font-bold text-cyan-400">{syncStatus.totalStormsCount} tracked</span>
           </div>
         </div>
 
-        {/* Right: Clean Navigation & Tool Controls */}
-        <div className="flex items-center gap-2">
-          {/* Documentation Links */}
-          <div className="hidden lg:flex items-center gap-1 bg-[#1e1e1e]/90 p-1 rounded-2xl border border-white/10 shadow-xl text-xs">
-            {onOpenMethodology && (
-              <button
-                onClick={onOpenMethodology}
-                className="px-3 py-1 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition"
-              >
-                Methodology
-              </button>
-            )}
-            {onOpenDataSources && (
-              <button
-                onClick={onOpenDataSources}
-                className="px-3 py-1 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition"
-              >
-                Data Sources
-              </button>
-            )}
-            {onOpenAbout && (
-              <button
-                onClick={onOpenAbout}
-                className="px-3 py-1 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition"
-              >
-                About
-              </button>
-            )}
-          </div>
+        {/* Navigation & Documentation Links */}
+        <div className="hidden lg:flex items-center gap-2 text-xs">
+          {onOpenMethodology && (
+            <button
+              onClick={onOpenMethodology}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition"
+            >
+              Methodology
+            </button>
+          )}
+          {onOpenDataSources && (
+            <button
+              onClick={onOpenDataSources}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition"
+            >
+              Data Sources
+            </button>
+          )}
+          {onOpenAbout && (
+            <button
+              onClick={onOpenAbout}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition"
+            >
+              About
+            </button>
+          )}
 
-          {/* Sensor Filter Toggle */}
+          {/* Sensor Filter */}
           {onSelectSensorFilter && (
-            <div className="hidden sm:flex items-center gap-0.5 bg-[#1e1e1e]/90 p-1 rounded-2xl border border-white/10 shadow-xl text-xs">
-              <span className="text-[10px] text-slate-400 px-2 uppercase font-medium">Sensor</span>
+            <div className="flex items-center gap-0.5 bg-slate-900/80 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+              <span className="text-slate-500 px-1">SENSOR:</span>
               {(['ALL', 'VIIRS', 'MODIS'] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => onSelectSensorFilter(f)}
-                  className={`px-2.5 py-1 rounded-xl text-[11px] font-medium transition ${
-                    activeSensorFilter === f
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
+                  className={`px-1.5 py-0.5 rounded ${activeSensorFilter === f ? 'bg-orange-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}
                 >
                   {f}
                 </button>
               ))}
             </div>
           )}
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-2">
+          {/* Manual Refresh Button */}
+          <button
+            onClick={() => {
+              audioController.playClick();
+              onRefreshTelemetry();
+            }}
+            disabled={isLoadingLive}
+            title="Refresh Live Satellite Feeds"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <RefreshCw className={`w-3 h-3 ${isLoadingLive ? 'animate-spin text-cyan-400' : ''}`} />
+            <span className="hidden sm:inline">Sync</span>
+          </button>
+
+          {/* Quick Search */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                audioController.playClick();
+                setIsSearchOpen(!isSearchOpen);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-cyan-300 hover:bg-slate-800 transition-colors"
+            >
+              <Search className="w-3 h-3 text-cyan-400" />
+              <span className="hidden sm:inline">Search Zone</span>
+            </button>
+
+            {isSearchOpen && (
+              <div className="absolute right-0 mt-2 w-72 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl p-2 z-50">
+                <input
+                  type="text"
+                  placeholder="Search country or climate region..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                  autoFocus
+                />
+                <div className="mt-2 max-h-52 overflow-y-auto divide-y divide-slate-800 text-xs">
+                  {filteredItems.slice(0, 5).map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        audioController.playSelect();
+                        onSelectCountryOrHotspot(item.lat, item.lng, 3.5);
+                        setIsSearchOpen(false);
+                      }}
+                      className="w-full text-left px-2 py-1.5 hover:bg-slate-900 flex items-center justify-between"
+                    >
+                      <span className="text-slate-200">{item.name}</span>
+                      <span className="text-[10px] text-amber-400 font-bold">{item.anomaly}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Guided Tour */}
           <button
@@ -207,35 +245,35 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               audioController.playSelect();
               onStartTour();
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition shadow-xl"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-semibold transition-colors"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Tour</span>
+            <Sparkles className="w-3 h-3" />
+            <span className="hidden sm:inline">Tipping Tour</span>
           </button>
 
-          {/* Earth Auto-spin */}
+          {/* Earth Auto-spin Toggle */}
           <button
             onClick={() => {
               audioController.playClick();
               onToggleAutoRotate();
             }}
-            title="Toggle Earth Rotation"
-            className={`p-2 rounded-2xl border transition ${
+            title="Toggle Earth Auto-Rotation"
+            className={`p-1.5 rounded-lg border text-[11px] transition-colors ${
               autoRotate
-                ? 'bg-blue-600/20 border-blue-400 text-blue-300'
-                : 'bg-[#1e1e1e]/90 border-white/10 text-slate-400 hover:text-white'
+                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
-            <RotateCw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }} />
+            <RotateCw className={`w-3 h-3 ${autoRotate ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }} />
           </button>
 
-          {/* Sound Mute */}
+          {/* Sound Toggle */}
           <button
             onClick={handleToggleMute}
             title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-            className="p-2 rounded-2xl bg-[#1e1e1e]/90 border border-white/10 text-slate-400 hover:text-white shadow-xl"
+            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300"
           >
-            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-slate-300" />}
+            {isMuted ? <VolumeX className="w-3 h-3 text-red-400" /> : <Volume2 className="w-3 h-3 text-cyan-400" />}
           </button>
         </div>
       </div>

@@ -119,12 +119,12 @@ export const ScientificAttributionCard: React.FC<ScientificAttributionCardProps>
   };
 
   return (
-    <div className="fixed top-20 right-6 z-40 w-96 max-w-[calc(100vw-3rem)] max-h-[85vh] overflow-y-auto rounded-2xl bg-[#1e1e1e]/95 border border-white/10 shadow-2xl backdrop-blur-xl text-slate-100 font-sans p-5 animate-in fade-in slide-in-from-right-4 duration-200 scrollbar-thin scrollbar-thumb-white/20">
+    <div className="fixed bottom-6 left-6 z-30 w-[480px] max-w-[calc(100vw-3rem)] max-h-[85vh] overflow-y-auto rounded-2xl bg-slate-950/95 border border-slate-800 shadow-2xl backdrop-blur-2xl text-slate-200 font-sans p-5 animate-in fade-in slide-in-from-bottom-4 duration-300 scrollbar-thin scrollbar-thumb-slate-700">
       {/* Header */}
-      <div className="flex items-start justify-between pb-3.5 border-b border-white/10">
+      <div className="flex items-start justify-between pb-3.5 border-b border-slate-800/80">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
               {badgeLabel}
             </span>
             <span className="text-[11px] font-mono text-slate-400">
@@ -138,7 +138,7 @@ export const ScientificAttributionCard: React.FC<ScientificAttributionCardProps>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition"
           aria-label="Close dossier"
         >
           <X className="w-4 h-4" />
@@ -147,83 +147,84 @@ export const ScientificAttributionCard: React.FC<ScientificAttributionCardProps>
 
       {/* Cluster Drilldown Action */}
       {isCluster && onDrillDownCluster && (
-        <div className="mt-3 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+        <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-orange-950/40 to-slate-900 border border-orange-800/40 flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-white block">Expand Active Points</span>
-            <span className="text-[11px] text-slate-400">View individual satellite detection pins</span>
+            <span className="text-xs font-semibold text-orange-200 block">Explode Cluster Points</span>
+            <span className="text-[11px] text-slate-400">Inspect individual satellite detection pins in this 1.5° bin</span>
           </div>
           <button
             onClick={() => onDrillDownCluster((event as FireCluster).id)}
-            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center gap-1 transition shadow-md"
+            className="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold flex items-center gap-1 transition shadow-lg"
           >
-            Zoom In <ArrowRight className="w-3.5 h-3.5" />
+            Zoom & Expand <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* 5-Stage Scientific Dossier */}
-      <div className="mt-4 space-y-3 text-xs">
+      <div className="mt-4 space-y-4 text-xs">
         {/* Stage 1: Observation */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/70">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5">
+            <span className="font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5" /> 1. SATELLITE OBSERVATION
             </span>
-            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300">
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               OBSERVED
             </span>
           </div>
-          <p className="text-slate-300 text-xs leading-relaxed">{attribution.observation.description}</p>
-          <div className="mt-2 text-[10px] font-mono text-slate-400">
-            SENSOR: <strong className="text-slate-200">{attribution.observation.instrument}</strong>
+          <p className="text-slate-300 leading-relaxed">{attribution.observation.description}</p>
+          <div className="mt-2 text-[10px] font-mono text-slate-400 flex items-center gap-2">
+            <span>SENSOR: <strong className="text-slate-200">{attribution.observation.instrument}</strong></span>
           </div>
         </div>
 
         {/* Stage 2: Event */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/70">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-blue-400 flex items-center gap-1.5">
+            <span className="font-mono text-[11px] font-bold text-sky-400 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" /> 2. CLASSIFIED EVENT
             </span>
-            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-blue-500/20 text-blue-300">
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30">
               {attribution.event.confidenceTag}
             </span>
           </div>
-          <p className="text-slate-300 text-xs leading-relaxed">{attribution.event.classification}</p>
+          <p className="text-slate-300 leading-relaxed">{attribution.event.classification}</p>
         </div>
 
         {/* Stage 3: Possible Drivers */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/70">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-purple-400 flex items-center gap-1.5">
+            <span className="font-mono text-[11px] font-bold text-purple-400 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5" /> 3. POSSIBLE DRIVERS
             </span>
-            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-purple-500/20 text-purple-300">
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
               {attribution.possibleDrivers.confidenceTag}
             </span>
           </div>
-          <ul className="space-y-1 text-slate-300 list-disc list-inside text-xs">
+          <ul className="space-y-1 text-slate-300 list-disc list-inside">
             {attribution.possibleDrivers.factors.map((fac: string, idx: number) => (
               <li key={idx} className="leading-relaxed">{fac}</li>
             ))}
           </ul>
-          <div className="mt-2 p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-200 flex items-start gap-1.5">
+          {/* Explicit Scientific Attribution Caveat */}
+          <div className="mt-2.5 p-2 rounded-lg bg-purple-950/30 border border-purple-800/30 text-[10px] text-purple-200 flex items-start gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
             <span>{attribution.possibleDrivers.caveat}</span>
           </div>
         </div>
 
         {/* Stage 4: Potential Impacts */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/70">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-amber-400 flex items-center gap-1.5">
+            <span className="font-mono text-[11px] font-bold text-amber-400 flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5" /> 4. POTENTIAL IMPACTS
             </span>
-            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300">
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
               {attribution.potentialImpacts.confidenceTag}
             </span>
           </div>
-          <ul className="space-y-1 text-slate-300 list-disc list-inside text-xs">
+          <ul className="space-y-1 text-slate-300 list-disc list-inside">
             {attribution.potentialImpacts.consequences.map((c: string, idx: number) => (
               <li key={idx} className="leading-relaxed">{c}</li>
             ))}
@@ -231,13 +232,13 @@ export const ScientificAttributionCard: React.FC<ScientificAttributionCardProps>
         </div>
 
         {/* Stage 5: Evidence & Citations */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/70">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+            <span className="font-mono text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5" /> 5. EVIDENCE & CITATIONS
             </span>
           </div>
-          <div className="space-y-1 text-slate-400 text-xs">
+          <div className="space-y-1 text-slate-400 text-[11px]">
             {attribution.evidenceAndCitations.datasets.map((ds: string, idx: number) => (
               <div key={idx} className="flex items-center gap-1 text-slate-300">
                 <span className="text-slate-500">•</span>
@@ -250,7 +251,7 @@ export const ScientificAttributionCard: React.FC<ScientificAttributionCardProps>
               href={attribution.evidenceAndCitations.doiOrUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-400 hover:underline"
+              className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-mono text-sky-400 hover:text-sky-300 transition"
             >
               Verify Primary Data Repository <ExternalLink className="w-3 h-3" />
             </a>

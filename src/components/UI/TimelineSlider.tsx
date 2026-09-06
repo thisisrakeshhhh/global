@@ -25,6 +25,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   const minYear = timeDomain === 'observed' ? 1880 : 2026;
   const maxYear = timeDomain === 'observed' ? 2024 : 2100;
 
+  // Find active milestone based on time domain
   let activeHeadline = '';
   let activeDetails = '';
   let metricCO2 = '426.9 ppm';
@@ -49,9 +50,10 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
     activeDetails = scenario.summary;
     metricCO2 = `${trajPoint.co2Ppm.toFixed(1)} ppm`;
     metricAnomaly = `+${trajPoint.tempAnomaly.toFixed(2)}°C`;
-    metricSource = 'IPCC AR6 WG I Projections';
+    metricSource = 'IPCC AR6 WG I Working Group Projections';
   }
 
+  // Playback timer
   useEffect(() => {
     let interval: any;
     if (isPlaying) {
@@ -59,30 +61,52 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
         if (currentYear >= maxYear) {
           setIsPlaying(false);
         } else {
-          onYearChange(Math.min(maxYear, currentYear + 5));
+          const step = timeDomain === 'observed' ? 5 : 5;
+          onYearChange(Math.min(maxYear, currentYear + step));
         }
       }, 700);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, currentYear, maxYear, onYearChange]);
+  }, [isPlaying, currentYear, maxYear, onYearChange, timeDomain]);
 
-  // In live mode, don't obstruct the bottom of the globe with giant banners
   if (timeDomain === 'live') {
-    return null;
+    return (
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-xl pointer-events-auto font-mono text-xs">
+        <div className="bg-slate-950/85 backdrop-blur-md border border-rose-500/40 rounded-xl p-3 shadow-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+            </span>
+            <div>
+              <div className="text-white font-bold text-xs flex items-center gap-2">
+                <span>NEAR-REAL-TIME SATELLITE MODE</span>
+                <span className="text-[10px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">
+                  LIVE STREAM
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400">
+                Displaying active NASA FIRMS wildfires, tropical cyclone tracks, and Copernicus flood maps.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-2xl pointer-events-auto font-sans text-xs">
-      <div className="bg-[#1e1e1e]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-3 sm:p-4 shadow-2xl flex flex-col gap-2.5">
+    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-2xl pointer-events-auto font-mono text-xs">
+      <div className="bg-slate-950/85 backdrop-blur-md border border-cyan-500/35 rounded-xl p-2.5 sm:p-3 shadow-2xl flex flex-col gap-2">
         {/* Top Info Line */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-400" />
-            <span className="text-xs font-medium text-white">
-              {timeDomain === 'observed' ? 'Empirical Record:' : 'IPCC Scenario:'}
+            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-[11px] font-bold text-white">
+              {timeDomain === 'observed' ? 'OBSERVED RECORD:' : 'IPCC PROJECTION:'}
             </span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-600/30 text-blue-300 font-mono font-semibold">
-              Year {currentYear}
+            <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40">
+              YEAR {currentYear}
             </span>
             {timeDomain === 'projected' && (
               <button
@@ -90,51 +114,52 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
                   audioController.playClick();
                   onOpenScenarioModal();
                 }}
-                className="text-[11px] px-2.5 py-0.5 rounded-full bg-purple-600/30 text-purple-300 hover:bg-purple-600/50 transition font-medium flex items-center gap-1"
+                className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold hover:bg-purple-500/30 flex items-center gap-1"
               >
-                <Sliders className="w-3 h-3" />
+                <Sliders className="w-2.5 h-2.5" />
                 <span>{selectedSSP}</span>
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3 text-[11px]">
             <div>
-              <span className="text-slate-400 mr-1">CO₂:</span>
-              <span className="text-sky-400 font-mono font-semibold">{metricCO2}</span>
+              <span className="text-slate-500 mr-1">CO₂:</span>
+              <span className="text-cyan-400 font-bold">{metricCO2}</span>
             </div>
             <div>
-              <span className="text-slate-400 mr-1">Anomaly:</span>
-              <span className="text-amber-400 font-mono font-semibold">{metricAnomaly}</span>
+              <span className="text-slate-500 mr-1">Anomaly:</span>
+              <span className="text-amber-400 font-bold">{metricAnomaly}</span>
             </div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="text-slate-400 hover:text-white p-1"
+              className="text-slate-400 hover:text-white p-0.5"
             >
               {isCollapsed ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
 
-        {/* Narrative */}
+        {/* Milestone Narrative */}
         {!isCollapsed && (
-          <div className="text-xs text-slate-300 space-y-0.5 pt-1 border-t border-white/10">
-            <div className="text-slate-200 font-medium">{activeHeadline}</div>
-            <div className="text-slate-400 text-[11px] leading-relaxed truncate">{activeDetails}</div>
+          <div className="text-[11px] text-slate-300 space-y-0.5">
+            <div className="text-cyan-300 font-semibold">{activeHeadline}</div>
+            <div className="text-slate-400 text-[10px] truncate">{activeDetails}</div>
+            <div className="text-slate-500 text-[9px] truncate">Citation: {metricSource}</div>
           </div>
         )}
 
         {/* Playback Controls & Slider */}
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => {
               audioController.playClick();
               onYearChange(minYear);
             }}
             title={`Reset to ${minYear}`}
-            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition"
+            className="p-1 rounded bg-slate-900 border border-slate-700 text-slate-400 hover:text-white"
           >
-            <Rewind className="w-3.5 h-3.5" />
+            <Rewind className="w-3 h-3" />
           </button>
 
           <button
@@ -143,13 +168,13 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               if (currentYear >= maxYear) onYearChange(minYear);
               setIsPlaying(!isPlaying);
             }}
-            className={`flex items-center justify-center w-8 h-8 rounded-xl transition ${
+            className={`flex items-center justify-center w-7 h-7 rounded-lg border transition-all ${
               isPlaying
-                ? 'bg-amber-500 text-black'
-                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
+                ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                : 'bg-cyan-500/20 border-cyan-500 text-cyan-300 hover:bg-cyan-500/30'
             }`}
           >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
           </button>
 
           <button
@@ -158,42 +183,42 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               onYearChange(maxYear);
             }}
             title={`Jump to ${maxYear}`}
-            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition"
+            className="p-1 rounded bg-slate-900 border border-slate-700 text-slate-400 hover:text-white"
           >
-            <FastForward className="w-3.5 h-3.5" />
+            <FastForward className="w-3 h-3" />
           </button>
 
-          {/* Slider */}
-          <div className="flex-1 relative flex items-center mx-2">
+          {/* Range Slider */}
+          <div className="flex-1 relative flex items-center">
             <input
               type="range"
               min={minYear}
               max={maxYear}
-              step={1}
+              step={timeDomain === 'observed' ? 1 : 1}
               value={currentYear}
               onChange={(e) => onYearChange(parseInt(e.target.value, 10))}
-              className="w-full h-1.5 bg-white/15 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
             />
           </div>
         </div>
 
-        {/* Milestones */}
-        <div className="flex justify-between text-[10px] text-slate-500 px-1 font-mono">
+        {/* Tick Milestones */}
+        <div className="flex justify-between text-[9px] text-slate-500 px-1">
           {timeDomain === 'observed' ? (
             <>
-              <button onClick={() => onYearChange(1880)} className="hover:text-slate-300">1880</button>
-              <button onClick={() => onYearChange(1958)} className="hover:text-slate-300">1958 MLO</button>
-              <button onClick={() => onYearChange(1980)} className="hover:text-slate-300">1980 Satellites</button>
-              <button onClick={() => onYearChange(2015)} className="hover:text-slate-300">2015 Paris</button>
-              <button onClick={() => onYearChange(2024)} className="hover:text-slate-300">2024</button>
+              <button onClick={() => onYearChange(1880)}>1880 Baseline</button>
+              <button onClick={() => onYearChange(1958)}>1958 Keeling MLO</button>
+              <button onClick={() => onYearChange(1980)}>1980 Satellite</button>
+              <button onClick={() => onYearChange(2015)}>2015 Paris</button>
+              <button onClick={() => onYearChange(2024)}>2024 Record</button>
             </>
           ) : (
             <>
-              <button onClick={() => onYearChange(2026)} className="hover:text-slate-300">2026</button>
-              <button onClick={() => onYearChange(2035)} className="hover:text-slate-300">2035</button>
-              <button onClick={() => onYearChange(2050)} className="hover:text-slate-300">2050 Net-Zero</button>
-              <button onClick={() => onYearChange(2075)} className="hover:text-slate-300">2075</button>
-              <button onClick={() => onYearChange(2100)} className="hover:text-slate-300">2100</button>
+              <button onClick={() => onYearChange(2026)}>2026 Present</button>
+              <button onClick={() => onYearChange(2035)}>2035</button>
+              <button onClick={() => onYearChange(2050)}>2050 Net-Zero Target</button>
+              <button onClick={() => onYearChange(2075)}>2075</button>
+              <button onClick={() => onYearChange(2100)}>2100 End-Century</button>
             </>
           )}
         </div>
