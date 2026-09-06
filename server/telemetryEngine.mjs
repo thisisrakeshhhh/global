@@ -1,16 +1,11 @@
-import { 
-  DataProvenance, 
-  NormalizedConfidence, 
-  FireDetectionPoint, 
-  FireCluster, 
-  NOAACycloneEvent, 
-  SourceFreshnessReport 
-} from '../types/climateIntelligence';
+/**
+ * Standalone Production Telemetry Ingestion Engine (Node.js)
+ * Executes strictly server-side: handles NASA FIRMS, NOAA NHC, validation, 
+ * 1.5° grid clustering, and caching. Zero external calls from client browser.
+ */
 
-// ==========================================
-// REGION GEOCODING LOOKUP (Clean Lat/Lng Bins)
-// ==========================================
-function resolveGeographicRegion(lat: number, lng: number): string {
+// Region geocoding lookup
+function resolveGeographicRegion(lat, lng) {
   if (lat > 60) return 'Arctic Boreal Zone';
   if (lat < -50) return 'Southern Ocean / Antarctic Rim';
   if (lat >= -20 && lat <= 10 && lng >= -75 && lng <= -45) return 'Amazon Basin & Cerrado';
@@ -27,17 +22,14 @@ function resolveGeographicRegion(lat: number, lng: number): string {
   return `${Math.abs(lat).toFixed(1)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(1)}° ${lng >= 0 ? 'E' : 'W'}`;
 }
 
-// ==========================================
-// CONFIDENCE NORMALIZATION
-// ==========================================
-export function normalizeSensorConfidence(sensor: string, rawVal: string | number): NormalizedConfidence {
+// Sensor-specific confidence normalization
+function normalizeConfidence(sensor, rawVal) {
   if (sensor.includes('VIIRS')) {
     const code = String(rawVal).trim().toLowerCase();
     if (code === 'h') return { value: 92, level: 'high', sourceField: 'h (high)' };
     if (code === 'n') return { value: 68, level: 'nominal', sourceField: 'n (nominal)' };
     return { value: 35, level: 'low', sourceField: 'l (low)' };
   }
-  // MODIS 0-100%
   const num = typeof rawVal === 'number' ? rawVal : parseInt(rawVal, 10);
   if (isNaN(num)) return { value: null, level: 'unknown', sourceField: String(rawVal) };
   return {
@@ -47,40 +39,22 @@ export function normalizeSensorConfidence(sensor: string, rawVal: string | numbe
   };
 }
 
-// ==========================================
-// TELEMETRY CACHE REPOSITORY
-// ==========================================
-interface TelemetryState {
-  fireClusters: FireCluster[];
-  allFirePoints: Map<string, FireDetectionPoint[]>; // clusterId -> child points
-  cyclones: NOAACycloneEvent[];
-  freshness: Record<string, SourceFreshnessReport>;
-  lastFirmsIngestTime: number;
-  lastNhcIngestTime: number;
-  lastEonetIngestTime: number;
-}
-
-const state: TelemetryState = {
+// In-memory cache repository
+const state = {
   fireClusters: [],
-  allFirePoints: new Map(),
+  allFirePoints: new Map(), // clusterId -> child points
   cyclones: [],
   freshness: {},
   lastFirmsIngestTime: 0,
-  lastNhcIngestTime: 0,
-  lastEonetIngestTime: 0
+  lastNhcIngestTime: 0
 };
 
-// 3 minute cache TTL
-const CACHE_TTL_MS = 180000;
+const CACHE_TTL_MS = 180000; // 3 minutes
 
-// ==========================================
-// 1. NASA FIRMS MULTI-SENSOR INGESTION
-// ==========================================
-export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 'ALL'): Promise<{
-  clusters: FireCluster[];
-  provenance: DataProvenance;
-  freshness: SourceFreshnessReport;
-}> {
+/**
+ * 1. NASA FIRMS Ingestion & 1.5° Grid Clustering
+ */
+export async function getFireTelemetry(sensorFilter = 'ALL') {
   const now = Date.now();
   const ingestIso = new Date(now).toISOString();
 
@@ -106,42 +80,38 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     };
   }
 
-  const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-  // NASA FIRMS public feeds (MODIS Terra/Aqua, VIIRS NOAA-20 & NOAA-21)
+  const mapKey = process.env.FIRMS_MAP_KEY;
   const feeds = [
     {
       sensor: 'MODIS',
       name: 'Terra/Aqua MODIS C6.1',
-      url: isLocalDev
-        ? '/api/firms/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
+      url: mapKey
+        ? `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${mapKey}/MODIS_NRT/world/1`
         : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
     },
     {
       sensor: 'VIIRS',
       name: 'NOAA-20 VIIRS C2',
-      url: isLocalDev
-        ? '/api/firms/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv'
+      url: mapKey
+        ? `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${mapKey}/VIIRS_NOAA20_NRT/world/1`
         : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv'
     },
     {
       sensor: 'VIIRS',
       name: 'NOAA-21 VIIRS C2',
-      url: isLocalDev
-        ? '/api/firms/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv'
+      url: mapKey
+        ? `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${mapKey}/VIIRS_NOAA21_NRT/world/1`
         : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv'
     }
   ];
 
-  const parsedPoints: FireDetectionPoint[] = [];
+  const parsedPoints = [];
   let latestObsUtc = '';
 
   for (const feed of feeds) {
     try {
-      const resp = await fetch(feed.url, {
-        headers: { Range: 'bytes=0-180000' }
-      });
-      if (!resp.ok && resp.status !== 206) continue;
+      const resp = await fetch(feed.url);
+      if (!resp.ok) continue;
 
       const text = await resp.text();
       const lines = text.trim().split('\n');
@@ -168,16 +138,15 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
         const acqDate = cols[dateIdx]?.trim() || '';
         const acqTime = cols[timeIdx]?.trim() || '0000';
         const rawConf = cols[confIdx]?.trim() || 'nominal';
-        const daynight = (cols[daynightIdx]?.trim() || 'D') as 'D' | 'N';
+        const daynight = (cols[daynightIdx]?.trim() || 'D');
 
-        // Strict Coordinate Validation
+        // Coordinate Validation
         if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
           continue;
         }
 
         // Sensor Confidence Normalization
-        const confObj = normalizeSensorConfidence(feed.sensor, rawConf);
-        // Discard low-confidence noise
+        const confObj = normalizeConfidence(feed.sensor, rawConf);
         if (confObj.level === 'low') continue;
 
         const timePadded = acqTime.padStart(4, '0');
@@ -199,16 +168,13 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
           daynight
         });
       }
-    } catch (e) {
-      console.warn(`[Ingestion] Failed reading feed ${feed.name}:`, e);
+    } catch (err) {
+      console.warn(`[Server Ingestion] Feed ${feed.name} warning:`, err.message);
     }
   }
 
-  // ==========================================
-  // SPATIAL 1.5° × 1.5° GRID BINNING ALGORITHM
-  // ==========================================
-  const gridMap = new Map<string, FireDetectionPoint[]>();
-
+  // 1.5° × 1.5° Geographic Grid Binning
+  const gridMap = new Map();
   for (const pt of parsedPoints) {
     const binLat = Math.floor(pt.lat / 1.5) * 1.5;
     const binLng = Math.floor(pt.lng / 1.5) * 1.5;
@@ -217,10 +183,10 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     if (!gridMap.has(gridKey)) {
       gridMap.set(gridKey, []);
     }
-    gridMap.get(gridKey)!.push(pt);
+    gridMap.get(gridKey).push(pt);
   }
 
-  const clusters: FireCluster[] = [];
+  const clusters = [];
   state.allFirePoints.clear();
 
   gridMap.forEach((points, gridKey) => {
@@ -228,12 +194,11 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     const avgLng = points.reduce((acc, p) => acc + p.lng, 0) / points.length;
     const totalFRP = points.reduce((acc, p) => acc + p.frp, 0);
     const maxFRP = Math.max(...points.map(p => p.frp));
-    
     const validConfs = points.map(p => p.confidence.value || 70);
     const avgConf = Math.round(validConfs.reduce((a, b) => a + b, 0) / validConfs.length);
 
     let latestInCluster = '';
-    const satellitesSet = new Set<string>();
+    const satellitesSet = new Set();
     points.forEach(p => {
       satellitesSet.add(p.satellite);
       const iso = `${p.acqDate}T${p.acqTime.slice(0, 2)}:${p.acqTime.slice(2)}:00Z`;
@@ -243,7 +208,7 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     const clusterId = `cluster_${gridKey}`;
     const regionName = resolveGeographicRegion(avgLat, avgLng);
 
-    const cluster: FireCluster = {
+    const cluster = {
       id: clusterId,
       lat: parseFloat(avgLat.toFixed(3)),
       lng: parseFloat(avgLng.toFixed(3)),
@@ -280,7 +245,7 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     ? Math.max(1, Math.round((now - new Date(latestObsUtc).getTime()) / 60000))
     : 120;
 
-  const firmsFreshness: SourceFreshnessReport = {
+  const firmsFreshness = {
     sourceId: 'firms',
     sourceName: 'NASA FIRMS Near-Real-Time',
     category: 'NEAR-REAL-TIME SATELLITE',
@@ -295,8 +260,15 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
 
   state.freshness['firms'] = firmsFreshness;
 
+  let resultClusters = state.fireClusters;
+  if (sensorFilter === 'VIIRS') {
+    resultClusters = state.fireClusters.filter(c => c.satellites.some(s => s.includes('VIIRS')));
+  } else if (sensorFilter === 'MODIS') {
+    resultClusters = state.fireClusters.filter(c => c.satellites.some(s => s.includes('MODIS')));
+  }
+
   return {
-    clusters: state.fireClusters,
+    clusters: resultClusters,
     provenance: state.fireClusters[0]?.provenance || {
       source: 'NASA FIRMS',
       dataset: 'VIIRS NOAA-20/21 & MODIS C6.1 NRT',
@@ -309,10 +281,10 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
   };
 }
 
-// ==========================================
-// 2. ON-DEMAND CLUSTER DRILLDOWN
-// ==========================================
-export function getClusterDetail(clusterId: string): FireCluster | null {
+/**
+ * On-demand cluster detail lookup
+ */
+export function getClusterDetail(clusterId) {
   const cluster = state.fireClusters.find(c => c.id === clusterId);
   if (!cluster) return null;
   const points = state.allFirePoints.get(clusterId) || [];
@@ -322,13 +294,10 @@ export function getClusterDetail(clusterId: string): FireCluster | null {
   };
 }
 
-// ==========================================
-// 3. NOAA NHC ACTIVE TROPICAL CYCLONE INGESTION
-// ==========================================
-export async function ingestNOAACyclones(): Promise<{
-  cyclones: NOAACycloneEvent[];
-  freshness: SourceFreshnessReport;
-}> {
+/**
+ * 2. NOAA NHC Active Cyclones Ingestion (NO SYNTHETIC TRACKS)
+ */
+export async function getCycloneTelemetry() {
   const now = Date.now();
   const ingestIso = new Date(now).toISOString();
 
@@ -339,15 +308,13 @@ export async function ingestNOAACyclones(): Promise<{
     };
   }
 
-  const cyclones: NOAACycloneEvent[] = [];
+  const cyclones = [];
   let latestAdvisoryUtc = '';
 
   try {
-    const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
     const nhcFeeds = [
-      { basin: 'Atlantic', url: isLocalDev ? '/api/nhc/index-at.xml' : 'https://www.nhc.noaa.gov/index-at.xml' },
-      { basin: 'Eastern Pacific', url: isLocalDev ? '/api/nhc/index-ep.xml' : 'https://www.nhc.noaa.gov/index-ep.xml' }
+      { basin: 'Atlantic', url: 'https://www.nhc.noaa.gov/index-at.xml' },
+      { basin: 'Eastern Pacific', url: 'https://www.nhc.noaa.gov/index-ep.xml' }
     ];
 
     for (const feed of nhcFeeds) {
@@ -372,13 +339,19 @@ export async function ingestNOAACyclones(): Promise<{
               const stormCategory = stormNameMatch ? stormNameMatch[1] : 'Tropical Cyclone';
               const stormName = stormNameMatch ? stormNameMatch[2] : 'Active System';
 
+              // Genuine coordinates from advisory text (e.g. "24.5N 88.2W")
               const coordMatch = desc.match(/([0-9]+\.[0-9]+)\s*([NS])\s*,\s*([0-9]+\.[0-9]+)\s*([EW])/i);
-              let lat = 20.0;
-              let lng = -65.0;
+              let lat = null;
+              let lng = null;
 
               if (coordMatch) {
                 lat = parseFloat(coordMatch[1]) * (coordMatch[2].toUpperCase() === 'S' ? -1 : 1);
                 lng = parseFloat(coordMatch[3]) * (coordMatch[4].toUpperCase() === 'W' ? -1 : 1);
+              }
+
+              // Only accept if NOAA coordinates are present
+              if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) {
+                continue;
               }
 
               const windMatch = desc.match(/winds\s+(?:of\s+)?([0-9]+)\s*mph/i);
@@ -391,6 +364,27 @@ export async function ingestNOAACyclones(): Promise<{
               const advIso = pubDate ? new Date(pubDate).toISOString() : ingestIso;
               if (!latestAdvisoryUtc || advIso > latestAdvisoryUtc) latestAdvisoryUtc = advIso;
 
+              // Parsing real forecast points if NOAA provided them in the advisory description
+              const forecastTrack = [];
+              const forecastMatches = desc.matchAll(/([0-9]+)\s*HR\s+VALID\s+([0-9/]+)\s+([0-9]+Z)\s+([0-9.]+)([NS])\s+([0-9.]+)([EW])\s+MAX\s+WIND\s+([0-9]+)\s*KT/gi);
+              for (const fm of forecastMatches) {
+                const fHour = parseInt(fm[1], 10);
+                const fLat = parseFloat(fm[4]) * (fm[5].toUpperCase() === 'S' ? -1 : 1);
+                const fLng = parseFloat(fm[6]) * (fm[7].toUpperCase() === 'W' ? -1 : 1);
+                const fWinds = parseInt(fm[8], 10);
+                if (!isNaN(fLat) && !isNaN(fLng)) {
+                  forecastTrack.push({
+                    forecastHour: fHour,
+                    validTimeUtc: advIso,
+                    lat: fLat,
+                    lng: fLng,
+                    maxWindsKts: fWinds,
+                    category: stormCategory
+                  });
+                }
+              }
+
+              // IMPORTANT: ZERO SYNTHETIC MATH! If forecastTrack is empty, it remains empty!
               cyclones.push({
                 id: `nhc_${feed.basin}_${stormName}_${advIso.slice(0, 10)}`,
                 stormName,
@@ -403,11 +397,8 @@ export async function ingestNOAACyclones(): Promise<{
                 centralPressureMb: pressure,
                 advisoryNumber: title,
                 advisoryTimeUtc: advIso,
-                forecastTrack: [
-                  { forecastHour: 12, validTimeUtc: advIso, lat: lat + 0.8, lng: lng - 1.2, maxWindsKts: kts, category: stormCategory },
-                  { forecastHour: 24, validTimeUtc: advIso, lat: lat + 1.6, lng: lng - 2.5, maxWindsKts: Math.max(35, kts - 5), category: stormCategory },
-                  { forecastHour: 48, validTimeUtc: advIso, lat: lat + 3.0, lng: lng - 4.5, maxWindsKts: Math.max(30, kts - 15), category: 'Tropical Depression' }
-                ],
+                forecastTrack, // Real NOAA forecast points only, or []
+                hasForecastTrack: forecastTrack.length > 0,
                 provenance: {
                   source: 'NOAA NHC',
                   dataset: 'NOAA NHC Active Tropical Cyclone Advisory',
@@ -421,17 +412,18 @@ export async function ingestNOAACyclones(): Promise<{
           }
         }
       } catch (e) {
-        console.warn(`[NHC Ingestion] Basin ${feed.basin} error:`, e);
+        console.warn(`[NHC Ingestion] Basin ${feed.basin} warning:`, e.message);
       }
     }
   } catch (err) {
-    console.warn('[NHC Ingestion] Master NHC fetch error:', err);
+    console.warn('[NHC Ingestion] Master error:', err.message);
   }
 
+  // Update state without inventing fake fallbacks
   state.cyclones = cyclones;
   state.lastNhcIngestTime = now;
 
-  const nhcFreshness: SourceFreshnessReport = {
+  const nhcFreshness = {
     sourceId: 'nhc',
     sourceName: 'NOAA National Hurricane Center',
     category: 'NEAR-REAL-TIME SATELLITE',
@@ -452,13 +444,13 @@ export async function ingestNOAACyclones(): Promise<{
   };
 }
 
-// ==========================================
-// 4. PLANETARY INDICATORS FRESHNESS
-// ==========================================
-export function getPlanetaryFreshness(): SourceFreshnessReport[] {
+/**
+ * 3. Freshness Telemetry Reports
+ */
+export function getFreshnessTelemetry() {
   const nowIso = new Date().toISOString();
 
-  const mloFreshness: SourceFreshnessReport = {
+  const mloFreshness = {
     sourceId: 'mlo',
     sourceName: 'NOAA Mauna Loa Observatory (MLO)',
     category: 'UPDATED OBSERVATION',
@@ -469,7 +461,7 @@ export function getPlanetaryFreshness(): SourceFreshnessReport[] {
     statusMessage: 'Monthly mean in-situ atmospheric CO₂ monitoring (Keeling Curve)'
   };
 
-  const era5Freshness: SourceFreshnessReport = {
+  const era5Freshness = {
     sourceId: 'era5',
     sourceName: 'Copernicus Climate Change Service (ERA5)',
     category: 'REANALYSIS / HISTORICAL',
