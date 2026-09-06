@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, MapPin, AlertCircle, ArrowRight, ExternalLink, ShieldCheck, BookOpen, Clock, Newspaper, Activity, Waves, Flame, CloudRain } from 'lucide-react';
+import { X, MapPin, AlertCircle, ExternalLink, ShieldCheck, BookOpen, Clock, Newspaper, Activity } from 'lucide-react';
 import { EventStory } from '../../types/eventStory';
 import { RegionalLocalMap } from '../Map/RegionalLocalMap';
 import { audioController } from '../../utils/audioController';
@@ -18,32 +18,32 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md pointer-events-auto animate-fadeIn font-sans text-slate-100">
-      <div className="relative w-full max-w-4xl bg-slate-950 border border-cyan-500/40 rounded-2xl shadow-[0_0_80px_rgba(6,182,212,0.2)] overflow-hidden flex flex-col max-h-[94vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md pointer-events-auto animate-fadeIn font-sans text-slate-200">
+      <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Top Header */}
-        <div className="flex items-start justify-between px-5 py-4 bg-slate-900/90 border-b border-cyan-500/30">
+        <div className="flex items-start justify-between px-6 py-4 bg-slate-900/90 border-b border-slate-800">
           <div className="flex items-start gap-3">
-            <span className="text-2xl sm:text-3xl p-1 bg-slate-800/80 rounded-xl border border-slate-700">
+            <span className="text-2xl sm:text-3xl p-1 bg-slate-800 rounded-lg border border-slate-700/60">
               {story.countryFlag}
             </span>
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="text-xs uppercase font-bold tracking-wider text-cyan-400">
+                <span className="text-xs uppercase font-semibold tracking-wider text-slate-400">
                   {story.countryName}
                 </span>
                 <span className="text-slate-600">•</span>
-                <span className="text-xs text-slate-400 font-medium">
+                <span className="text-xs text-slate-400">
                   {story.region}
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/40">
+                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-medium border border-slate-700">
                   {story.statusBadge}
                 </span>
               </div>
-              <h1 className="text-base sm:text-xl font-black text-white leading-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-50 leading-tight">
                 {story.title}
               </h1>
               <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-cyan-400" />
+                <Clock className="w-3 h-3 text-slate-500" />
                 <span>{story.eventDate}</span>
               </p>
             </div>
@@ -59,25 +59,24 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
         </div>
 
         {/* Scrollable Story Content */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-xs sm:text-sm">
+        <div className="p-6 overflow-y-auto space-y-6 text-sm">
           {/* SECTION 1: WHAT HAPPENED? */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase text-xs tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              WHAT HAPPENED?
-            </div>
-            <p className="text-slate-200 text-sm sm:text-base leading-relaxed font-normal bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              What happened?
+            </h3>
+            <p className="text-slate-200 text-sm sm:text-base leading-relaxed bg-slate-900/50 p-4 rounded-xl border border-slate-800">
               {story.summary}
             </p>
 
             {/* Quick Facts Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {story.keyFacts.map((fact, i) => (
-                <div key={i} className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-0.5">
+                <div key={i} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">
                     {fact.label}
                   </span>
-                  <span className="text-xs sm:text-sm font-bold text-white block">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-100 block">
                     {fact.value}
                   </span>
                 </div>
@@ -86,32 +85,32 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
           </section>
 
           {/* SECTION 2: 📍 WHERE IS IT HAPPENING? (2D Regional Map) */}
-          <section className="space-y-2.5">
+          <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-rose-400 font-bold uppercase text-xs tracking-wider">
-                <MapPin className="w-4 h-4" />
-                📍 WHERE IS IT HAPPENING?
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                <span>Where is it happening?</span>
               </div>
-              <span className="text-[11px] text-slate-400">
-                Globe shows where on Earth • Local map shows where exactly
+              <span className="text-[11px] text-slate-500">
+                The globe shows where on Earth; the local map shows where exactly.
               </span>
             </div>
 
             {/* 2D Local Map */}
-            <RegionalLocalMap config={story.mapConfig} title={`${story.countryName} — Local Flood Corridor`} />
+            <RegionalLocalMap config={story.mapConfig} title={`${story.countryName} Local Geography`} />
           </section>
 
           {/* SECTION 3: WHY DID IT HAPPEN? (Visual Causal Chain + Uncertainty) */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 text-amber-400 font-bold uppercase text-xs tracking-wider">
-              <Activity className="w-4 h-4" />
-              WHY DID IT HAPPEN?
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <Activity className="w-3.5 h-3.5 text-slate-400" />
+              <span>Why did it happen?</span>
             </div>
 
-            {/* Step-by-Step Causal Chain */}
+            {/* Causal Chain */}
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">
-                Visual Causal Chain of Events:
+              <span className="text-xs text-slate-400 font-medium block">
+                Causal chain of events:
               </span>
 
               <div className="flex flex-col gap-2">
@@ -119,27 +118,25 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
                   const isLast = idx === story.causalChain.length - 1;
                   return (
                     <div key={idx} className="flex items-start gap-3">
-                      {/* Step Indicator */}
                       <div className="flex flex-col items-center">
-                        <div className="w-6 h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center text-xs font-mono font-bold text-cyan-300">
+                        <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-mono font-semibold text-slate-300">
                           {idx + 1}
                         </div>
-                        {!isLast && <div className="w-0.5 h-6 bg-slate-700 my-0.5" />}
+                        {!isLast && <div className="w-px h-6 bg-slate-800 my-0.5" />}
                       </div>
 
-                      {/* Content */}
-                      <div className="flex-1 pb-2">
+                      <div className="flex-1 pb-1.5">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-slate-100 text-xs sm:text-sm">
+                          <span className="font-semibold text-slate-200 text-xs sm:text-sm">
                             {step.label}
                           </span>
                           <span
-                            className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded border ${
+                            className={`text-[9px] uppercase font-medium px-2 py-0.5 rounded border ${
                               step.certainty === 'OBSERVED'
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
                                 : step.certainty === 'ASSESSED'
-                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                ? 'bg-sky-500/10 text-sky-300 border-sky-500/20'
+                                : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
                             }`}
                           >
                             {step.certainty.replace('_', ' ')}
@@ -157,8 +154,8 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
               </div>
             </div>
 
-            {/* Scientific Uncertainty Notice */}
-            <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/40 flex items-start gap-2.5 text-xs text-amber-200/90 leading-relaxed">
+            {/* Uncertainty Notice */}
+            <div className="p-3.5 rounded-xl bg-amber-950/15 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-200/90 leading-relaxed">
               <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <span>{story.uncertaintyNotes}</span>
             </div>
@@ -166,35 +163,34 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
 
           {/* SECTION 4: WHAT WAS AFFECTED? */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 text-rose-400 font-bold uppercase text-xs tracking-wider">
-              <ShieldCheck className="w-4 h-4" />
-              WHAT WAS AFFECTED?
-            </div>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              What was affected?
+            </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-300 block mb-1">
                   Communities & Citizens
                 </span>
-                <p className="text-slate-300 text-xs leading-relaxed">
+                <p className="text-slate-400 text-xs leading-relaxed">
                   {story.impactsSummary.communities}
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-300 block mb-1">
                   Roads & Bridges
                 </span>
-                <p className="text-slate-300 text-xs leading-relaxed">
+                <p className="text-slate-400 text-xs leading-relaxed">
                   {story.impactsSummary.infrastructure}
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-300 block mb-1">
                   Power & Hydro Facilities
                 </span>
-                <p className="text-slate-300 text-xs leading-relaxed">
+                <p className="text-slate-400 text-xs leading-relaxed">
                   {story.impactsSummary.hydropowerAndTransport}
                 </p>
               </div>
@@ -204,39 +200,39 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
           {/* SECTION 5: 📰 WHAT ARE SOURCES REPORTING? */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase text-xs tracking-wider">
-                <Newspaper className="w-4 h-4" />
-                📰 WHAT ARE SOURCES REPORTING?
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <Newspaper className="w-3.5 h-3.5 text-slate-400" />
+                <span>What are sources reporting?</span>
               </div>
-              <span className="text-[11px] text-slate-400">
-                Credible news agencies & official situation bulletins
+              <span className="text-[11px] text-slate-500">
+                Verified news agencies & official situation bulletins
               </span>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {story.newsReports.map((report, idx) => (
                 <a
                   key={idx}
                   href={report.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-900 transition-all group"
+                  className="block p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 transition-colors group"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-cyan-400 text-xs">
+                      <span className="font-semibold text-slate-300 text-xs">
                         {report.source}
                       </span>
                       <span className="text-[10px] text-slate-500">
                         {report.publishedAt}
                       </span>
                     </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition" />
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition" />
                   </div>
 
-                  <h3 className="font-bold text-slate-200 text-xs sm:text-sm group-hover:text-white transition">
+                  <h4 className="font-semibold text-slate-100 text-xs sm:text-sm group-hover:text-white transition">
                     {report.title}
-                  </h3>
+                  </h4>
                   <p className="text-slate-400 text-xs mt-1 leading-relaxed line-clamp-2">
                     {report.snippet}
                   </p>
@@ -247,16 +243,14 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
 
           {/* SECTION 6: 🌍 CONNECT TODAY WITH HISTORY */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase text-xs tracking-wider">
-              <Clock className="w-4 h-4" />
-              🌍 CONNECT TODAY WITH HISTORY: IS THE CLIMATE CHANGING?
-            </div>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Connect today with history: Is the climate changing?
+            </h3>
 
-            <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Temperature Trend */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-amber-400 font-bold uppercase block mb-1">
+                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
                     Surface Warming (1850–Present)
                   </span>
                   <p className="text-slate-300 text-xs leading-relaxed">
@@ -264,9 +258,8 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
                   </p>
                 </div>
 
-                {/* Rainfall Trend */}
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-sky-400 font-bold uppercase block mb-1">
+                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
                     Precipitation Dynamics
                   </span>
                   <p className="text-slate-300 text-xs leading-relaxed">
@@ -274,11 +267,10 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
                   </p>
                 </div>
 
-                {/* Cryosphere Trend */}
                 {story.historicalContext.cryosphereTrend && (
-                  <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-cyan-400 font-bold uppercase block mb-1">
-                      Himalayan Glaciers & Moraines
+                  <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                    <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
+                      Glaciers & Cryosphere
                     </span>
                     <p className="text-slate-300 text-xs leading-relaxed">
                       {story.historicalContext.cryosphereTrend}
@@ -288,8 +280,8 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
               </div>
 
               {/* Attribution Guardrail Callout */}
-              <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/30 flex items-start gap-2.5 text-xs text-cyan-200/90 leading-relaxed">
-                <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
+                <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <span>{story.historicalContext.attributionGuardrail}</span>
               </div>
             </div>
@@ -297,14 +289,13 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
 
           {/* SECTION 7: 🔬 SCIENTIFIC EVIDENCE & CITATIONS */}
           <section className="space-y-3 pb-2">
-            <div className="flex items-center gap-2 text-indigo-400 font-bold uppercase text-xs tracking-wider">
-              <BookOpen className="w-4 h-4" />
-              🔬 SCIENTIFIC EVIDENCE & PRIMARY DATASETS
-            </div>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Scientific evidence & primary datasets
+            </h3>
 
             <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
-                <strong className="text-slate-300 block mb-1">Satellite Remote Sensing:</strong>
+                <strong className="text-slate-300 block mb-1 text-xs">Satellite Remote Sensing:</strong>
                 <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
                   {story.evidenceSources.satelliteSystems.map((s, i) => (
                     <li key={i}>{s}</li>
@@ -313,7 +304,7 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
               </div>
 
               <div>
-                <strong className="text-slate-300 block mb-1">Government & Emergency Feeds:</strong>
+                <strong className="text-slate-300 block mb-1 text-xs">Government & Official Feeds:</strong>
                 <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
                   {story.evidenceSources.governmentAgencies.map((g, i) => (
                     <li key={i}>{g}</li>
@@ -322,7 +313,7 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
               </div>
 
               <div>
-                <strong className="text-slate-300 block mb-1">Scientific Data Sources:</strong>
+                <strong className="text-slate-300 block mb-1 text-xs">Scientific Datasets:</strong>
                 <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
                   {story.evidenceSources.scientificDatasets.map((d, i) => (
                     <li key={i}>{d}</li>
@@ -334,13 +325,13 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 bg-slate-900/90 border-t border-cyan-500/30 flex items-center justify-between text-xs">
-          <span className="text-[10px] text-slate-500">
+        <div className="px-6 py-3.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs">
+          <span className="text-[11px] text-slate-500">
             EARTH // LIVE • Verified Evidence & Climate Intelligence
           </span>
           <button
             onClick={handleClose}
-            className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-lg transition"
+            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs transition"
           >
             Close Story
           </button>

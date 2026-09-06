@@ -25,20 +25,20 @@ export const VitalsDrawer: React.FC<VitalsDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/60 backdrop-blur-sm pointer-events-auto animate-fadeIn font-sans text-slate-100">
-      <div className="w-full max-w-md bg-slate-950/95 border-l border-cyan-500/30 p-5 overflow-y-auto flex flex-col justify-between shadow-2xl">
+      <div className="w-full max-w-md bg-slate-950/95 border-l border-slate-800 p-6 overflow-y-auto flex flex-col justify-between shadow-2xl">
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-cyan-950/70 border border-cyan-500/40 text-cyan-400">
-                <Activity className="w-4 h-4 animate-pulse" />
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                <Activity className="w-4 h-4 text-cyan-400" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 tracking-tight">
                   Earth's Vital Signs
                 </h3>
-                <span className="text-[10px] text-slate-400">
-                  Global Planetary Health Telemetry
+                <span className="text-[11px] text-slate-400">
+                  Global planetary health telemetry
                 </span>
               </div>
             </div>

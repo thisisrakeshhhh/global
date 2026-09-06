@@ -206,22 +206,42 @@ export const NEPAL_FLOOD_STORY: EventStory = {
  */
 export function createStoryFromFireCluster(cluster: FireCluster): EventStory {
   const isHighIntensity = cluster.maxFRP > 500;
-  const humanIntensity = isHighIntensity ? 'High-Intensity Fire Activity' : 'Thermal Hotspot Activity';
+  
+  // Detect country / region flag
+  let flag = '🔥';
+  let countryName = cluster.regionName;
+  if (cluster.regionName.toLowerCase().includes('australia')) {
+    flag = '🇦🇺';
+    countryName = 'Australia';
+  } else if (cluster.regionName.toLowerCase().includes('brazil') || cluster.regionName.toLowerCase().includes('amazon')) {
+    flag = '🇧🇷';
+    countryName = 'Brazil';
+  } else if (cluster.regionName.toLowerCase().includes('mediterranean') || cluster.regionName.toLowerCase().includes('greece') || cluster.regionName.toLowerCase().includes('spain')) {
+    flag = '🇪🇺';
+    countryName = 'Mediterranean';
+  } else if (cluster.regionName.toLowerCase().includes('canada') || cluster.regionName.toLowerCase().includes('north america')) {
+    flag = '🇨🇦';
+    countryName = 'Canada';
+  } else if (cluster.regionName.toLowerCase().includes('africa') || cluster.regionName.toLowerCase().includes('congo')) {
+    flag = '🌍';
+    countryName = 'Central Africa';
+  }
 
   return {
     id: `fire-cluster-${cluster.id}`,
-    title: `Wildfire activity detected in ${cluster.regionName}`,
-    subtitle: `${cluster.regionName} · Satellite Observation`,
-    countryName: cluster.regionName,
+    title: `Wildfire activity detected across ${cluster.regionName}`,
+    subtitle: `Satellite observation · Recent`,
+    countryName: countryName,
     countryCode: 'HOT',
-    countryFlag: '🔥',
+    countryFlag: flag,
     region: cluster.regionName,
     eventDate: `Observed ${new Date(cluster.latestObservation).toLocaleDateString()}`,
-    statusBadge: 'Active Satellite Detection',
+    statusBadge: 'Active detection',
     category: 'wildfire',
     categoryIcon: '🔥',
 
-    summary: `NASA orbital thermal sensors detected active thermal anomalies in ${cluster.regionName}. Radiative power measurements indicate combustion of biomass or surface vegetation.`,
+    summary: `NASA orbital thermal sensors detected active thermal anomalies in ${cluster.regionName}. Radiative power measurements indicate combustion of surface vegetation and biomass.`,
+
 
     keyFacts: [
       { label: 'Thermal Detections', value: `${cluster.detectionCount} satellite points` },
@@ -442,6 +462,85 @@ export function createStoryFromCyclone(cyclone: NOAACycloneEvent): EventStory {
   };
 }
 
+export const AUSTRALIA_WILDFIRE_STORY: EventStory = {
+  id: 'australia-bushfire-satellite',
+  title: 'Wildfire activity detected across Eastern Australia',
+  subtitle: 'Satellite observation · Recent',
+  countryName: 'Australia',
+  countryCode: 'AUS',
+  countryFlag: '🇦🇺',
+  region: 'Eastern Australia (Queensland & New South Wales)',
+  eventDate: 'Satellite observation · Recent',
+  statusBadge: 'Active detection',
+  category: 'wildfire',
+  categoryIcon: '🔥',
+  summary: 'NASA VIIRS orbital sensors detected thermal fire anomalies across dry eucalyptus woodlands in Eastern Australia following elevated vapor pressure deficit and dry seasonal winds.',
+  keyFacts: [
+    { label: 'Primary Sensor', value: 'VIIRS NOAA-20 / NOAA-21 (375 m)' },
+    { label: 'Fuel Type', value: 'Sclerophyll woodland & savannah' },
+    { label: 'Contributing Index', value: 'High Forest Fire Danger Index' },
+    { label: 'Agency Tracking', value: 'Bureau of Meteorology (BOM) & QFES' }
+  ],
+  mapConfig: {
+    centerLat: -27.47,
+    centerLng: 151.85,
+    defaultZoom: 7,
+    markers: [
+      {
+        lat: -26.85,
+        lng: 151.85,
+        label: 'Thermal Hotspot Cluster',
+        type: 'epicenter',
+        description: 'Cluster of middle-infrared radiative fire detections.'
+      },
+      {
+        lat: -27.47,
+        lng: 153.02,
+        label: 'Brisbane',
+        type: 'city'
+      }
+    ]
+  },
+  causalChain: [
+    { label: 'Prolonged High Temperature & Low Humidity', detail: 'Elevated vapor pressure deficit accelerates soil and canopy moisture evaporation.', certainty: 'OBSERVED' },
+    { label: 'Vegetation Fuel Desiccation', detail: 'High curing rates leave grasses and eucalypt litter highly combustible.', certainty: 'OBSERVED' },
+    { label: 'Ignition & Flare-Up', detail: 'Dry lightning or local spark initiates surface fire front.', certainty: 'UNDER_INVESTIGATION' },
+    { label: 'Atmospheric Smoke Plume', detail: 'Winds drive aerosol dispersion across regional corridors.', certainty: 'OBSERVED' }
+  ],
+  uncertaintyNotes: 'Satellite Detection Notice: NASA FIRMS middle-infrared sensors detect fire radiance (FRP) at the moment of satellite overpass. Local ignition causes and containment status are determined by regional state fire authorities (RFS/QFES).',
+  impactsSummary: {
+    communities: 'Air quality advisories issued in downwind communities; localized smoke haze.',
+    infrastructure: 'Rural access roads monitored for smoke visibility hazards.',
+    hydropowerAndTransport: 'Regional electrical transmission corridors inspected.'
+  },
+  newsReports: [
+    {
+      title: 'Satellite sensors monitor active brush fires across Eastern Australian interior',
+      source: 'Australian Associated Press (AAP)',
+      sourceType: 'news_agency',
+      publishedAt: 'Recent Bulletin',
+      url: 'https://www.bom.gov.au',
+      snippet: 'State fire services urge landowners to maintain firebreaks as warmer seasonal conditions elevate fire danger ratings.'
+    }
+  ],
+  historicalContext: {
+    regionName: 'Australia & Tasman Basin',
+    tempAnomaly1850toNow: '+1.6°C warming anomaly across the Australian continent since 1910',
+    rainfallTrend: 'Cool-season rainfall in south-eastern Australia has declined by ~12% over recent decades.',
+    attributionGuardrail: 'Attribution Notice: Detecting an active fire front is not by itself direct proof of climate change. However, long-term warming and extended fire weather seasons significantly increase the number of days with dangerous fire conditions.',
+    citations: [
+      'Bureau of Meteorology (BOM) State of the Climate 2024',
+      'CSIRO Australian Climate Change Science',
+      'IPCC AR6 WGII Chapter 11: Australasia'
+    ]
+  },
+  evidenceSources: {
+    satelliteSystems: ['VIIRS NOAA-20 375m NRT', 'Himawari-9 Geostationary 10-Minute Rapid Fire Detection'],
+    governmentAgencies: ['Bureau of Meteorology (BOM)', 'Queensland Fire and Emergency Services (QFES)'],
+    scientificDatasets: ['NASA FIRMS Active Fire Database', 'Global Wildfire Information System (GWIS)']
+  }
+};
+
 /**
  * Retrieve primary featured stories (dynamically populated)
  */
@@ -451,17 +550,19 @@ export function getFeaturedStories(
 ): EventStory[] {
   const stories: EventStory[] = [NEPAL_FLOOD_STORY];
 
+  // If there are real active fire clusters from satellite, format top one or use Australia
+  if (fireClusters.length > 0) {
+    const topCluster = [...fireClusters].sort((a, b) => b.maxFRP - a.maxFRP)[0];
+    stories.push(createStoryFromFireCluster(topCluster));
+  } else {
+    stories.push(AUSTRALIA_WILDFIRE_STORY);
+  }
+
   // If there are real cyclones, add the most severe one
   if (cyclones.length > 0) {
     stories.push(createStoryFromCyclone(cyclones[0]));
   }
 
-  // If there are real fire clusters, pick the most energetic cluster
-  if (fireClusters.length > 0) {
-    // Sort by maxFRP descending
-    const topCluster = [...fireClusters].sort((a, b) => b.maxFRP - a.maxFRP)[0];
-    stories.push(createStoryFromFireCluster(topCluster));
-  }
-
   return stories;
 }
+

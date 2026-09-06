@@ -272,23 +272,25 @@ export function App() {
         {presentationMode === 'explore' && (
           <div className="w-full flex flex-col items-center justify-center px-4 pointer-events-none my-auto">
             <div className="flex flex-col items-center text-center max-w-xl mx-auto pointer-events-auto animate-fadeIn">
-              <span className="px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/40 text-[11px] font-bold text-cyan-300 uppercase tracking-widest mb-3 backdrop-blur-md shadow-lg flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-cyan-400" />
-                Planetary Climate Intelligence
+              <span className="px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-[11px] font-medium text-slate-300 mb-3 backdrop-blur-md shadow-sm">
+                Climate intelligence
               </span>
-              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)]">
+              <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-50 tracking-tight leading-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)]">
                 How is our planet changing?
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-2.5 max-w-md drop-shadow-md leading-relaxed">
-                Explore real satellite observations, verified disaster response, and the evidence behind Earth's climate story.
+              <p className="text-sm sm:text-base text-slate-300 mt-3 max-w-md drop-shadow-md leading-relaxed">
+                See the places where Earth's climate is changing — and understand why.
               </p>
               <button
                 onClick={() => handleOpenEventStory(NEPAL_FLOOD_STORY)}
-                className="mt-5 px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-500 hover:to-teal-400 text-white text-xs sm:text-sm font-bold shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all flex items-center gap-2 group cursor-pointer"
+                className="mt-6 px-6 py-2.5 rounded-full bg-slate-100 hover:bg-white text-slate-950 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group cursor-pointer"
               >
-                <span>Explore what's happening</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span>Explore today's events</span>
+                <ArrowRight className="w-4 h-4 text-slate-900 group-hover:translate-x-0.5 transition-transform" />
               </button>
+              <span className="text-[11px] text-slate-400 mt-2.5 font-normal">
+                Live satellite observations · Climate records · Verified sources
+              </span>
             </div>
           </div>
         )}
@@ -306,6 +308,7 @@ export function App() {
                 cyclones={cyclones}
                 onSelectStory={handleOpenEventStory}
                 onExploreAll={() => handleSelectPresentationMode('events')}
+                onOpenVitals={() => setIsVitalsOpen(true)}
               />
             </div>
           )}
