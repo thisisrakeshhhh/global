@@ -18,7 +18,13 @@ import {
 
 export type ClimateLayer = 'temperature' | 'emissions' | 'oceans' | 'ice' | 'forests';
 
-interface ClimateGlobeProps {
+export interface ClimateGlobeHandle {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetView: () => void;
+}
+
+export interface ClimateGlobeProps {
   activeLayer: ClimateLayer;
   timeDomain: TimeDomain;
   selectedYear: number;
@@ -35,7 +41,7 @@ interface ClimateGlobeProps {
   expandedCluster?: FireCluster | null;
 }
 
-export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
+export const ClimateGlobe = React.forwardRef<ClimateGlobeHandle, ClimateGlobeProps>(({
   activeLayer,
   timeDomain,
   selectedYear,
@@ -50,7 +56,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   fireClusters = [],
   cyclones = [],
   expandedCluster = null
-}) => {
+}, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -58,6 +64,30 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   const globeGroupRef = useRef<THREE.Group | null>(null);
   const cloudsMeshRef = useRef<THREE.Mesh | null>(null);
   const hotspotsManagerRef = useRef<HotspotsPillarsManager | null>(null);
+
+  React.useImperativeHandle(ref, () => ({
+    zoomIn: () => {
+      if (cameraRef.current) {
+        const currentDist = cameraRef.current.position.length();
+        const newDist = Math.max(2.5, currentDist - 0.5);
+        cameraRef.current.position.setLength(newDist);
+      }
+    },
+    zoomOut: () => {
+      if (cameraRef.current) {
+        const currentDist = cameraRef.current.position.length();
+        const newDist = Math.min(7.5, currentDist + 0.5);
+        cameraRef.current.position.setLength(newDist);
+      }
+    },
+    resetView: () => {
+      if (cameraRef.current && globeGroupRef.current) {
+        globeGroupRef.current.rotation.y = -Math.PI * 0.42;
+        globeGroupRef.current.rotation.x = 0.22;
+        cameraRef.current.position.set(0, 0.05, 4.8);
+      }
+    }
+  }));
   const liveEventsManagerRef = useRef<LiveEventsLayerManager | null>(null);
 
   const thermalMeshRef = useRef<THREE.Mesh | null>(null);
@@ -399,4 +429,4 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
       className="relative w-full h-full cursor-grab active:cursor-grabbing select-none overflow-hidden"
     />
   );
-};
+});

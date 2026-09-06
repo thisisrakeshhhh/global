@@ -1,19 +1,31 @@
 import React, { useState } from 'react';
-import { Activity, Satellite, CheckCircle, Clock, Database, ChevronDown, ChevronUp, AlertCircle, RefreshCw } from 'lucide-react';
+import { Activity, Satellite, CheckCircle, Clock, Database, ChevronDown, ChevronUp, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { SourceFreshnessReport } from '../../types/climateIntelligence';
 
 interface DataFreshnessPanelProps {
   reports: SourceFreshnessReport[];
   onManualRefresh?: () => void;
   isRefreshing?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
   reports,
   onManualRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  isOpen: controlledIsOpen,
+  onClose
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = (val: boolean) => {
+    if (controlledIsOpen !== undefined) {
+      if (!val) onClose?.();
+    } else {
+      setInternalIsOpen(val);
+    }
+  };
 
   const isDegraded = reports.some(r => r.state === 'DELAYED' || r.state === 'NO_DATA');
 
@@ -25,36 +37,20 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
     return 'bg-purple-500/20 text-purple-400 border-purple-500/40';
   };
 
-  return (
-    <div className="fixed top-20 right-6 z-30 flex flex-col items-end">
-      {/* Trigger Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 backdrop-blur-md shadow-xl text-xs font-mono transition-all text-slate-200"
-      >
-        <span className="relative flex h-2 w-2">
-          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isDegraded ? 'bg-amber-400' : 'bg-emerald-400'} opacity-75`}></span>
-          <span className={`relative inline-flex rounded-full h-2 w-2 ${isDegraded ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-        </span>
-        <span className="font-semibold tracking-wider text-slate-300">DATA FRESHNESS</span>
-        <span className="text-slate-500">•</span>
-        <span className={`font-medium ${isDegraded ? 'text-amber-400' : 'text-emerald-400'}`}>
-          {isDegraded ? 'CACHE DEGRADED' : 'SATELLITE SYNC'}
-        </span>
-        {isOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-      </button>
+  if (!isOpen) return null;
 
-      {/* Dropdown Panel */}
-      {isOpen && (
-        <div className="mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-slate-950/95 border border-slate-800 shadow-2xl backdrop-blur-xl p-4 font-sans text-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3">
-            <div>
-              <h3 className="text-sm font-semibold tracking-wide text-white flex items-center gap-2">
-                <Satellite className="w-4 h-4 text-emerald-400" />
-                Planetary Telemetry Status
-              </h3>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5">Strict separation of NRT vs In-Situ vs Reanalysis</p>
-            </div>
+  return (
+    <div className="fixed top-20 right-6 z-40 flex flex-col items-end animate-fadeIn">
+      <div className="mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-slate-950/95 border border-slate-800 shadow-2xl backdrop-blur-xl p-4 font-sans text-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3">
+          <div>
+            <h3 className="text-sm font-semibold tracking-wide text-white flex items-center gap-2">
+              <Satellite className="w-4 h-4 text-emerald-400" />
+              Planetary Telemetry Status
+            </h3>
+            <p className="text-[11px] text-slate-400 font-mono mt-0.5">Strict separation of NRT vs In-Situ vs Reanalysis</p>
+          </div>
+          <div className="flex items-center gap-1.5">
             {onManualRefresh && (
               <button
                 onClick={onManualRefresh}
@@ -65,7 +61,15 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
             )}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              title="Close panel"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
+        </div>
 
           <div className="space-y-2.5">
             {reports.map(report => (
@@ -113,7 +117,6 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
             <span className="font-mono text-slate-500">Auto-poll: 180s</span>
           </div>
         </div>
-      )}
-    </div>
+      </div>
   );
 };

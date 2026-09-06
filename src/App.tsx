@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ClimateGlobe, ClimateLayer } from './components/Globe/ClimateGlobe';
-import { HeaderHUD } from './components/UI/HeaderHUD';
-import { TimeDomainSelector } from './components/UI/TimeDomainSelector';
-import { LayerSelector } from './components/UI/LayerSelector';
-import { TimelineSlider } from './components/UI/TimelineSlider';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ClimateGlobe, ClimateGlobeHandle, ClimateLayer } from './components/Globe/ClimateGlobe';
+import { MainNavbar } from './components/UI/MainNavbar';
+import { MetricsBanner } from './components/UI/MetricsBanner';
+import { ClimateLayersPanel, LayerState } from './components/UI/ClimateLayersPanel';
+import { LatestEventsPanel, DisplayEvent } from './components/UI/LatestEventsPanel';
+import { GlobeFloatingControls } from './components/UI/GlobeFloatingControls';
+import { BottomBanners } from './components/UI/BottomBanners';
 import { ScientificDossier } from './components/UI/ScientificDossier';
-import { LiveEventsDrawer } from './components/UI/LiveEventsDrawer';
-import { ScenarioComparisonModal } from './components/UI/ScenarioComparisonModal';
-import { GuidedTourModal } from './components/UI/GuidedTourModal';
-import { LegendBar } from './components/UI/LegendBar';
 import { DataFreshnessPanel } from './components/UI/DataFreshnessPanel';
 import { ScientificAttributionCard } from './components/UI/ScientificAttributionCard';
 import { MethodologyPage } from './components/Pages/MethodologyPage';
@@ -72,30 +70,55 @@ export function App() {
   const [timeDomain, setTimeDomain] = useState<TimeDomain>('live');
   const [selectedSSP, setSelectedSSP] = useState<SSPScenario>('SSP2-4.5');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [activeLayer, setActiveLayer] = useState<ClimateLayer>('temperature');
+  const [activeLayer, setActiveLayer] = useState<ClimateLayer>('forests');
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
+
+  // Globe Handle Ref for Floating Camera Controls
+  const globeRef = useRef<ClimateGlobeHandle>(null);
+
+  // Climate Layers Toggle State
+  const [layerState, setLayerState] = useState<LayerState>({
+    fires: true,
+    cyclones: false,
+    temperature: false,
+    oceanHeat: false,
+    polarIce: false,
+    greenhouseGases: false
+  });
+
+  const handleToggleLayer = (key: keyof LayerState) => {
+    setLayerState(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (key === 'temperature') setActiveLayer('temperature');
+      else if (key === 'oceanHeat') setActiveLayer('oceans');
+      else if (key === 'polarIce') setActiveLayer('ice');
+      else if (key === 'greenhouseGases') setActiveLayer('emissions');
+      else if (key === 'fires') setActiveLayer('forests');
+      return next;
+    });
+  };
 
   // Live Telemetry Datasets
   const [fireClusters, setFireClusters] = useState<FireCluster[]>([]);
   const [cyclones, setCyclones] = useState<NOAACycloneEvent[]>([]);
   const [freshnessReports, setFreshnessReports] = useState<SourceFreshnessReport[]>([]);
-  const [sensorFilter, setSensorFilter] = useState<'ALL' | 'VIIRS' | 'MODIS'>('ALL');
   const [isLoadingLive, setIsLoadingLive] = useState<boolean>(true);
   const [expandedCluster, setExpandedCluster] = useState<FireCluster | null>(null);
+
+  // Freshness Modal State
+  const [isFreshnessOpen, setIsFreshnessOpen] = useState<boolean>(false);
 
   // Selection & Inspector States
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; distance?: number } | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<InteractiveEntity | null>(null);
   const [selectedAttributionItem, setSelectedAttributionItem] = useState<FireCluster | FireDetectionPoint | NOAACycloneEvent | LiveEvent | null>(null);
-  const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
-  const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
 
   // Fetch telemetry from centralized server API client
   const loadTelemetry = useCallback(async () => {
     setIsLoadingLive(true);
     try {
       const [firesData, cyclonesData, freshnessData] = await Promise.all([
-        getFireClusters(sensorFilter),
+        getFireClusters('ALL'),
         getActiveCyclones(),
         getTelemetryFreshness()
       ]);
@@ -108,7 +131,7 @@ export function App() {
     } finally {
       setIsLoadingLive(false);
     }
-  }, [sensorFilter]);
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -138,15 +161,36 @@ export function App() {
     setFocusTarget({ lat, lng, distance });
   };
 
-  const handleTimeDomainChange = (domain: TimeDomain) => {
-    setTimeDomain(domain);
+  const handleSelectDisplayEvent = (event: DisplayEvent) => {
     setAutoRotate(false);
-    if (domain === 'live') {
-      setSelectedYear(2026);
-    } else if (domain === 'observed') {
-      setSelectedYear(2024);
-    } else if (domain === 'projected') {
-      setSelectedYear(2050);
+    setFocusTarget({ lat: event.lat, lng: event.lng, distance: 3.4 });
+    if (event.rawItem) {
+      setSelectedAttributionItem(event.rawItem);
+    } else {
+      const synthEvent: LiveEvent = {
+        id: event.id,
+        title: `${event.title} - ${event.location}`,
+        type: event.type,
+        location: event.location,
+        lat: event.lat,
+        lng: event.lng,
+        detectedAt: event.timestamp,
+        exactUtcTimestamp: new Date().toISOString(),
+        metricLabel: event.type === 'wildfire' ? 'Fire Radiative Power' : 'Wind Speed',
+        metricValue: event.stats,
+        details: `${event.title} observed at ${event.location}. Real-time telemetry indicators: ${event.stats}.`,
+        source: event.type === 'wildfire' ? 'NASA FIRMS VIIRS' : 'NOAA National Hurricane Center',
+        severity: event.badge === 'HIGH' ? 'critical' : 'moderate',
+        isLiveFetched: true
+      };
+      setSelectedAttributionItem(synthEvent);
+    }
+  };
+
+  const handleOpenWiki = (chapterId?: string) => {
+    navigateTo('wiki');
+    if (chapterId && typeof window !== 'undefined') {
+      sessionStorage.setItem('selectedChapterId', chapterId);
     }
   };
 
@@ -161,9 +205,6 @@ export function App() {
       activeTippingPoint = selectedEntity.data as TippingPoint;
     }
   }
-
-  // Aggregate total detections across clusters
-  const totalFires = fireClusters.reduce((acc, c) => acc + c.detectionCount, 0);
 
   // Substantive Pages Navigation Render
   if (activeRoute === 'wiki') {
@@ -185,162 +226,132 @@ export function App() {
   }
 
   return (
-    <div className="relative w-screen h-screen bg-[#020617] overflow-hidden select-none font-sans text-slate-100">
-      {/* 3D WebGL Earth Visualizer (The Hero Interface) */}
-      <ClimateGlobe
-        activeLayer={activeLayer}
-        timeDomain={timeDomain}
-        selectedYear={selectedYear}
-        autoRotate={autoRotate}
-        focusTarget={focusTarget}
-        onSelectEntity={(ent) => {
-          setAutoRotate(false);
-          setSelectedEntity(ent);
-        }}
-        onSelectCluster={(cluster) => {
-          setAutoRotate(false);
-          if (cluster) {
-            setSelectedAttributionItem(cluster);
-            setFocusTarget({ lat: cluster.lat, lng: cluster.lng, distance: 3.4 });
-          } else {
-            setSelectedAttributionItem(null);
-          }
-        }}
-        onSelectCyclone={(cyclone) => {
-          setAutoRotate(false);
-          if (cyclone) {
-            setSelectedAttributionItem(cyclone);
-            setFocusTarget({ lat: cyclone.currentLat, lng: cyclone.currentLng, distance: 3.4 });
-          } else {
-            setSelectedAttributionItem(null);
-          }
-        }}
-        onSelectPoint={(point) => {
-          setAutoRotate(false);
-          if (point) {
-            setSelectedAttributionItem(point);
-          }
-        }}
-        onSelectLiveEvent={(ev) => {
-          setAutoRotate(false);
-          setSelectedAttributionItem(ev);
-        }}
-        fireClusters={fireClusters}
-        cyclones={cyclones}
-        expandedCluster={expandedCluster}
-      />
+    <div className="relative w-screen h-screen bg-[#030712] overflow-hidden select-none font-sans text-slate-100">
+      {/* 3D WebGL Earth Visualizer (Full Background) */}
+      <div className="absolute inset-0 z-0">
+        <ClimateGlobe
+          ref={globeRef}
+          activeLayer={activeLayer}
+          timeDomain={timeDomain}
+          selectedYear={selectedYear}
+          autoRotate={autoRotate}
+          focusTarget={focusTarget}
+          onSelectEntity={(ent) => {
+            setAutoRotate(false);
+            setSelectedEntity(ent);
+          }}
+          onSelectCluster={(cluster) => {
+            setAutoRotate(false);
+            if (cluster) {
+              setSelectedAttributionItem(cluster);
+              setFocusTarget({ lat: cluster.lat, lng: cluster.lng, distance: 3.4 });
+            } else {
+              setSelectedAttributionItem(null);
+            }
+          }}
+          onSelectCyclone={(cyclone) => {
+            setAutoRotate(false);
+            if (cyclone) {
+              setSelectedAttributionItem(cyclone);
+              setFocusTarget({ lat: cyclone.currentLat, lng: cyclone.currentLng, distance: 3.4 });
+            } else {
+              setSelectedAttributionItem(null);
+            }
+          }}
+          onSelectPoint={(point) => {
+            setAutoRotate(false);
+            if (point) {
+              setSelectedAttributionItem(point);
+            }
+          }}
+          onSelectLiveEvent={(ev) => {
+            setAutoRotate(false);
+            setSelectedAttributionItem(ev);
+          }}
+          fireClusters={layerState.fires ? fireClusters : []}
+          cyclones={layerState.cyclones ? cyclones : []}
+          expandedCluster={expandedCluster}
+        />
+      </div>
 
-      {/* Clean Top Header HUD with 5-Second Vital Telemetry */}
-      <HeaderHUD
-        autoRotate={autoRotate}
-        onToggleAutoRotate={() => setAutoRotate(!autoRotate)}
-        onStartTour={() => {
-          setAutoRotate(false);
-          setIsTourOpen(true);
-        }}
-        onSelectCountryOrHotspot={handleSelectCountryOrHotspot}
-        currentTimeDomain={timeDomain}
-        syncStatus={{
-          status: 'live',
-          sourceLabel: 'NASA FIRMS & NOAA NHC',
-          lastSyncFormatted: '3m cycle',
-          lastUpdatedSecondsAgo: 0,
-          totalFiresCount: totalFires,
-          totalStormsCount: cyclones.length,
-          totalEvents: totalFires + cyclones.length
-        }}
-        onRefreshTelemetry={loadTelemetry}
-        isLoadingLive={isLoadingLive}
-        onOpenWiki={() => navigateTo('wiki')}
-        onOpenMethodology={() => navigateTo('methodology')}
-        onOpenDataSources={() => navigateTo('datasources')}
-        onOpenAbout={() => navigateTo('about')}
-        activeSensorFilter={sensorFilter}
-        onSelectSensorFilter={(sf) => setSensorFilter(sf)}
-        clusterCount={fireClusters.length}
-        cycloneCount={cyclones.length}
-      />
+      {/* Foreground UI Layer with Dashboard Grid matching exact reference screenshot */}
+      <div className="relative z-10 w-full h-full flex flex-col justify-between pointer-events-none">
+        {/* Top Bar Section */}
+        <div className="w-full flex flex-col pointer-events-auto">
+          <MainNavbar
+            activeRoute={activeRoute}
+            onNavigate={(route) => navigateTo(route)}
+            onSelectCoordinates={handleSelectCountryOrHotspot}
+          />
+          <MetricsBanner
+            firesClusterCount={fireClusters.length}
+            cyclonesCount={cyclones.length}
+            sourcesOnlineCount={freshnessReports.filter(r => r.state !== 'NO_DATA' && r.state !== 'DELAYED').length || 4}
+            lastUpdatedMinutesAgo={2}
+            onOpenFreshness={() => setIsFreshnessOpen(!isFreshnessOpen)}
+          />
+        </div>
 
-      {/* Data Freshness Indicator & Drawer (Top Right) */}
+        {/* Center Main Section: Climate Layers Panel (Left) & Latest Events Panel (Right) */}
+        <div className="w-full flex-1 flex items-center justify-between px-4 min-h-0 pointer-events-none relative">
+          {/* Left Panel: Climate Layers */}
+          <div className="pointer-events-auto my-auto">
+            <ClimateLayersPanel
+              layers={layerState}
+              onToggleLayer={handleToggleLayer}
+              onOpenSourceModal={() => navigateTo('datasources')}
+            />
+          </div>
+
+          {/* Center Floating Controls (Zoom +/-, Earth Alignment & Near-Real-Time Pill) */}
+          <GlobeFloatingControls
+            onZoomIn={() => globeRef.current?.zoomIn()}
+            onZoomOut={() => globeRef.current?.zoomOut()}
+            onResetView={() => globeRef.current?.resetView()}
+            onRefresh={loadTelemetry}
+            isRefreshing={isLoadingLive}
+          />
+
+          {/* Right Panel: Latest Events */}
+          <div className="pointer-events-auto my-auto">
+            <LatestEventsPanel
+              onSelectEvent={handleSelectDisplayEvent}
+              onViewAll={() => navigateTo('datasources')}
+              fireClusters={fireClusters}
+              cyclones={cyclones}
+            />
+          </div>
+        </div>
+
+        {/* Bottom Section: Climate Encyclopedia Banner (~75%) & Sponsored Partner Banner (~25%) */}
+        <div className="w-full pointer-events-auto">
+          <BottomBanners onOpenWiki={handleOpenWiki} />
+        </div>
+      </div>
+
+      {/* Data Freshness Indicator Modal */}
       <DataFreshnessPanel
         reports={freshnessReports}
         onManualRefresh={loadTelemetry}
         isRefreshing={isLoadingLive}
+        isOpen={isFreshnessOpen}
+        onClose={() => setIsFreshnessOpen(false)}
       />
 
-      {/* Central Time Domain Switcher (Live vs Observed vs Projected) */}
-      <TimeDomainSelector
-        currentDomain={timeDomain}
-        onSelectDomain={handleTimeDomainChange}
-      />
-
-      {/* Clean Left-Side Controls Column */}
-      <div className="absolute left-3 sm:left-4 top-16 sm:top-16 z-20 flex flex-col gap-2 pointer-events-none max-h-[85vh] overflow-y-auto no-scrollbar">
-        <LayerSelector
-          activeLayer={activeLayer}
-          onSelectLayer={(layer) => setActiveLayer(layer)}
-        />
-        <LegendBar activeLayer={activeLayer} />
-      </div>
-
-      {/* Domain-Aware Timeline Slider */}
-      <TimelineSlider
-        timeDomain={timeDomain}
-        currentYear={selectedYear}
-        onYearChange={(year) => setSelectedYear(year)}
-        selectedSSP={selectedSSP}
-        onOpenScenarioModal={() => setIsScenarioModalOpen(true)}
-      />
-
-      {/* 5-Stage Scientific Attribution Card (Observation ➔ Event ➔ Drivers ➔ Impacts ➔ Evidence) */}
+      {/* 5-Stage Scientific Attribution Card */}
       <ScientificAttributionCard
         event={selectedAttributionItem}
         onClose={() => setSelectedAttributionItem(null)}
         onDrillDownCluster={handleDrillDownCluster}
       />
 
-      {/* Scientific Country & Tipping Point Attribution Dossier */}
+      {/* Scientific Country & Tipping Point Dossier */}
       <ScientificDossier
         country={activeCountryProfile}
         tippingPoint={activeTippingPoint}
         onClose={() => setSelectedEntity(null)}
         defaultTab="drivers"
       />
-
-      {/* IPCC AR6 Scenario Modeler Modal */}
-      <ScenarioComparisonModal
-        selectedSSP={selectedSSP}
-        onSelectSSP={(ssp) => {
-          setSelectedSSP(ssp);
-          setIsScenarioModalOpen(false);
-        }}
-        isOpen={isScenarioModalOpen}
-        onClose={() => setIsScenarioModalOpen(false)}
-      />
-
-      {/* Guided Tipping Point Tour */}
-      <GuidedTourModal
-        isOpen={isTourOpen}
-        onClose={() => setIsTourOpen(false)}
-        onFocusCoordinates={handleSelectCountryOrHotspot}
-      />
-
-      {/* Footer Navigation Bar */}
-      <footer className="absolute bottom-2 left-0 right-0 z-20 pointer-events-none flex justify-center px-4">
-        <div className="pointer-events-auto flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-950/80 backdrop-blur-md border border-slate-800/80 text-[11px] font-mono text-slate-400">
-          <button onClick={() => setActiveRoute('methodology')} className="hover:text-emerald-400 transition">Methodology</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('datasources')} className="hover:text-emerald-400 transition">Data Sources</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('about')} className="hover:text-emerald-400 transition">About</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('privacy')} className="hover:text-emerald-400 transition">Privacy</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('terms')} className="hover:text-emerald-400 transition">Terms</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('contact')} className="hover:text-emerald-400 transition">Contact</button>
-        </div>
-      </footer>
     </div>
   );
 }
