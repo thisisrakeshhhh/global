@@ -9,6 +9,8 @@ interface HistoryPageProps {
   selectedYear: number;
   onYearChange: (year: number) => void;
   initialIndicator?: IndicatorType;
+  contextNotice?: string | null;
+  onClearContextNotice?: () => void;
   onClose?: () => void;
 }
 
@@ -16,6 +18,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
   selectedYear,
   onYearChange,
   initialIndicator = 'temperature',
+  contextNotice,
+  onClearContextNotice,
   onClose
 }) => {
   const [activeIndicator, setActiveIndicator] = useState<IndicatorType>(initialIndicator);
@@ -34,6 +38,27 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 text-slate-100 font-sans space-y-6 animate-fadeIn pb-24">
+      {/* Event-to-History Transition Guardrail Notice Banner */}
+      {contextNotice && (
+        <div className="p-4 rounded-xl bg-slate-900/90 border border-amber-500/40 shadow-lg flex items-start justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-amber-300 block mb-0.5">Scientific Climate Context Guardrail</span>
+              <p className="text-slate-300 leading-relaxed">{contextNotice}</p>
+            </div>
+          </div>
+          {onClearContextNotice && (
+            <button
+              onClick={onClearContextNotice}
+              className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded hover:bg-slate-800 transition cursor-pointer"
+            >
+              Dismiss
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Editorial Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-5">
         <div>

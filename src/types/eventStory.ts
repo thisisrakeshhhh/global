@@ -45,6 +45,13 @@ export interface NewsReportItem {
   snippet: string;
 }
 
+export interface EventHistoryLink {
+  indicator: 'temperature' | 'co2' | 'ocean' | 'oceanHeat' | 'seaIce' | 'seaLevel';
+  label: string;
+  year?: number;
+  contextRationale?: string;
+}
+
 export interface HistoricalClimateContext {
   regionName: string;
   tempAnomaly1850toNow: string; // e.g. "+1.4°C since pre-industrial (higher in high-altitude zones)"
@@ -52,6 +59,7 @@ export interface HistoricalClimateContext {
   cryosphereTrend?: string;     // e.g. "Rapid Himalayan glacier retreat and moraine destabilization (ICIMOD 2023)"
   attributionGuardrail: string; // Explicit distinction: event is not automatic proof, but background risk has shifted
   citations: string[];
+  historyLinks?: EventHistoryLink[];
   linkedIndicator?: 'temperature' | 'co2' | 'ocean' | 'oceanHeat' | 'seaIce' | 'seaLevel';
   linkedHistoryYear?: number;
 }

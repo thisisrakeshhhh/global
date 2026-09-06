@@ -1,5 +1,88 @@
-import { EventStory, EventCategory } from '../types/eventStory';
+import { EventStory, EventCategory, EventHistoryLink } from '../types/eventStory';
 import { FireCluster, NOAACycloneEvent } from '../types/climateIntelligence';
+
+/**
+ * Systematic category-to-history linkages ensuring every event type
+ * automatically provides appropriate climate context without hard-coded one-offs.
+ */
+export const CATEGORY_HISTORY_MAPPINGS: Record<EventCategory, EventHistoryLink[]> = {
+  flood: [
+    {
+      indicator: 'temperature',
+      label: 'Global Surface Temperature',
+      year: 2026,
+      contextRationale: 'Context: Planetary warming increases atmospheric water-holding capacity (~7% per 1°C) and accelerates cryosphere melt in mountain catchments.'
+    },
+    {
+      indicator: 'co2',
+      label: 'Atmospheric CO₂ Record',
+      year: 2026,
+      contextRationale: 'Long-term greenhouse forcing context driving background thermodynamic shifts.'
+    }
+  ],
+  wildfire: [
+    {
+      indicator: 'temperature',
+      label: 'Global Surface Temperature Anomaly',
+      year: 2026,
+      contextRationale: 'Context: Long-term temperature rise amplifies vapor pressure deficits (VPD) and accelerates fuel aridity across vulnerable biomes.'
+    },
+    {
+      indicator: 'co2',
+      label: 'Atmospheric CO₂ Record',
+      year: 2026,
+      contextRationale: 'Planetary baseline: In-situ Mauna Loa Keeling Curve tracking cumulative fossil carbon accumulation.'
+    }
+  ],
+  cyclone: [
+    {
+      indicator: 'ocean',
+      label: 'Sea Surface Temperature Anomaly',
+      year: 2026,
+      contextRationale: 'Context: Explore the ocean surface temperatures that can influence tropical cyclone development and intensification.'
+    },
+    {
+      indicator: 'oceanHeat',
+      label: 'Ocean Heat Content (0–2000m)',
+      year: 2026,
+      contextRationale: 'Context: Subsurface thermal energy uptake recorded by global Argo profiling floats providing thermal fuel for storm development.'
+    }
+  ],
+  cryosphere: [
+    {
+      indicator: 'seaIce',
+      label: 'Arctic Sea Ice Minimum',
+      year: 2026,
+      contextRationale: 'Context: Continuous satellite microwave tracking of polar cryospheric loss since 1979.'
+    },
+    {
+      indicator: 'temperature',
+      label: 'Global Surface Temperature',
+      year: 2026,
+      contextRationale: 'Context: Arctic and high-mountain amplification of global temperature anomalies.'
+    }
+  ],
+  heat: [
+    {
+      indicator: 'temperature',
+      label: 'Global Surface Temperature Record',
+      year: 2026,
+      contextRationale: 'Context: NASA GISTEMP instrumental series tracking shifting baseline probabilities of extreme heat events.'
+    }
+  ],
+  drought: [
+    {
+      indicator: 'temperature',
+      label: 'Surface Temperature & Heat Anomaly',
+      year: 2026,
+      contextRationale: 'Context: Evaporative demand amplification associated with elevated atmospheric temperatures.'
+    }
+  ]
+};
+
+export function getHistoryLinksForCategory(category: EventCategory): EventHistoryLink[] {
+  return CATEGORY_HISTORY_MAPPINGS[category] || CATEGORY_HISTORY_MAPPINGS.flood;
+}
 
 /**
  * Verified Real-World Event Story: Nepal Bhote Koshi–Trishuli Flash Flood
@@ -180,6 +263,7 @@ export const NEPAL_FLOOD_STORY: EventStory = {
       'IPCC AR6 WGII Chapter 10: "Asia — Mountains and River Basins"',
       'Department of Hydrology and Meteorology (DHM), Government of Nepal'
     ],
+    historyLinks: CATEGORY_HISTORY_MAPPINGS.flood,
     linkedIndicator: 'temperature',
     linkedHistoryYear: 2026
   },
@@ -319,7 +403,8 @@ export function createStoryFromFireCluster(cluster: FireCluster): EventStory {
         'Global Wildfire Information System (GWIS)',
         'Copernicus Atmosphere Monitoring Service (CAMS)'
       ],
-      linkedIndicator: 'co2',
+      historyLinks: CATEGORY_HISTORY_MAPPINGS.wildfire,
+      linkedIndicator: 'temperature',
       linkedHistoryYear: 2026
     },
 
@@ -441,12 +526,13 @@ export function createStoryFromCyclone(cyclone: NOAACycloneEvent): EventStory {
       regionName: `${cyclone.basin} Tropical Belt`,
       tempAnomaly1850toNow: 'Sea-surface temperatures are +1.2°C above historical averages across tropical genesis zones.',
       rainfallTrend: 'Warmer atmosphere holds 7% more moisture per 1°C (Clausius-Clapeyron relation), increasing hurricane rainfall rates.',
-      attributionGuardrail: 'Scientific Attribution: Climate change does not necessarily increase total global cyclone counts, but peer-reviewed research indicates it increases the proportion of Category 4–5 intense storms and elevates peak rainfall rates.',
+      attributionGuardrail: 'Scientific Context: Sea-surface temperature and upper-ocean heat content influence tropical cyclone development and intensification potential. Cyclone formation also depends on atmospheric wind shear, middle-tropospheric moisture, and broad circulation patterns.',
       citations: [
         'NOAA Geophysical Fluid Dynamics Laboratory (GFDL)',
         'IPCC AR6 Working Group 1 Chapter 11: Extreme Weather',
         'Knutson et al., Bulletin of the American Meteorological Society'
       ],
+      historyLinks: CATEGORY_HISTORY_MAPPINGS.cyclone,
       linkedIndicator: 'ocean',
       linkedHistoryYear: 2026
     },

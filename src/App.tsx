@@ -102,6 +102,7 @@ export function App() {
   const [selectedEntity, setSelectedEntity] = useState<InteractiveEntity | null>(null);
   const [selectedCountryProfile, setSelectedCountryProfile] = useState<ScientificCountryProfile | null>(null);
   const [activeHistoryIndicator, setActiveHistoryIndicator] = useState<'temperature' | 'co2' | 'ocean' | 'oceanHeat' | 'seaIce' | 'seaLevel'>('temperature');
+  const [historyContextNotice, setHistoryContextNotice] = useState<string | null>(null);
 
   // Fetch telemetry from centralized server API client
   const loadTelemetry = useCallback(async () => {
@@ -171,6 +172,7 @@ export function App() {
 
   // Deep-link from Event Story to History Layer
   const handleExploreHistoryFromStory = (indicator?: string, year?: number) => {
+    const storyRegion = activeStory?.countryName || 'Regional';
     setActiveStory(null);
     if (indicator && ['temperature', 'co2', 'ocean', 'oceanHeat', 'seaIce', 'seaLevel'].includes(indicator)) {
       setActiveHistoryIndicator(indicator as any);
@@ -178,6 +180,9 @@ export function App() {
     if (year) {
       setSelectedYear(year);
     }
+    setHistoryContextNotice(
+      `Climate context: ${storyRegion} long-term planetary records provide context for a changing climate. They do not by themselves establish that climate change caused this particular individual event.`
+    );
     handleSelectPresentationMode('history');
   };
 
@@ -307,6 +312,8 @@ export function App() {
               selectedYear={selectedYear}
               onYearChange={(yr) => setSelectedYear(yr)}
               initialIndicator={activeHistoryIndicator}
+              contextNotice={historyContextNotice}
+              onClearContextNotice={() => setHistoryContextNotice(null)}
             />
           </div>
         )}
