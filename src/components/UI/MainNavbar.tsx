@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Search, Sun, Globe, X, BookOpen, Layers, History, MapPin, Radio, ChevronDown } from 'lucide-react';
+import { Search, Globe, X, BookOpen, Layers, History, MapPin, Radio, Activity, ChevronDown } from 'lucide-react';
 import { SCIENTIFIC_COUNTRY_INTELLIGENCE } from '../../services/countryIntelligenceService';
 import { TIPPING_POINTS } from '../../data/tippingPoints';
 
-export type PresentationMode = 'global' | 'history' | 'countries' | 'events' | 'evidence';
+export type PresentationMode = 'explore' | 'history' | 'countries' | 'events' | 'evidence';
 
 interface MainNavbarProps {
   activeMode: PresentationMode;
   onSelectMode: (mode: PresentationMode) => void;
   onNavigatePage: (page: 'wiki' | 'methodology' | 'datasources' | 'about') => void;
+  onOpenVitals: () => void;
   onSelectCoordinates?: (lat: number, lng: number, distance?: number) => void;
 }
 
@@ -16,6 +17,7 @@ export const MainNavbar: React.FC<MainNavbarProps> = ({
   activeMode,
   onSelectMode,
   onNavigatePage,
+  onOpenVitals,
   onSelectCoordinates
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -40,15 +42,15 @@ export const MainNavbar: React.FC<MainNavbarProps> = ({
   ].filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6);
 
   return (
-    <nav className="w-full flex items-center justify-between px-3 sm:px-5 py-2.5 z-30 font-sans">
+    <nav className="w-full flex items-center justify-between px-3 sm:px-6 py-3 z-30 font-sans">
       {/* Left: Brand & Tagline */}
       <div
         className="flex items-center gap-3 cursor-pointer group"
-        onClick={() => onSelectMode('global')}
+        onClick={() => onSelectMode('explore')}
       >
         {/* Globe Logo Icon */}
         <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center justify-center bg-gradient-to-br from-blue-600 via-cyan-500 to-emerald-400 group-hover:scale-105 transition-transform">
-          <Globe className="w-5 h-5 text-white animate-spin-slow" />
+          <Globe className="w-4.5 h-4.5 text-white animate-spin-slow" />
         </div>
 
         {/* Title */}
@@ -60,137 +62,133 @@ export const MainNavbar: React.FC<MainNavbarProps> = ({
             // LIVE
           </span>
         </div>
-
-        {/* Tagline */}
-        <span className="hidden lg:inline-block text-xs text-slate-400 font-normal ml-2 tracking-wide border-l border-slate-800 pl-3">
-          Understand how the planet is changing.
-        </span>
       </div>
 
-      {/* Center/Right: 5 Product Mode Pills */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {/* Primary 5-Mode Switcher */}
-        <div className="flex items-center gap-1 bg-slate-900/80 backdrop-blur-md p-1 rounded-full border border-slate-800/90 shadow-lg">
-          {/* 1. GLOBAL */}
+      {/* Center: Clean 5 Mode Navigation */}
+      <div className="flex items-center gap-1 bg-slate-900/70 backdrop-blur-md p-1 rounded-full border border-slate-800 shadow-lg">
+        {/* 1. Explore */}
+        <button
+          onClick={() => onSelectMode('explore')}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            activeMode === 'explore'
+              ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          Explore
+        </button>
+
+        {/* 2. History */}
+        <button
+          onClick={() => onSelectMode('history')}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            activeMode === 'history'
+              ? 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          History
+        </button>
+
+        {/* 3. Countries */}
+        <button
+          onClick={() => onSelectMode('countries')}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            activeMode === 'countries'
+              ? 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          Countries
+        </button>
+
+        {/* 4. Events */}
+        <button
+          onClick={() => onSelectMode('events')}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            activeMode === 'events'
+              ? 'bg-rose-600 text-white shadow-[0_0_12px_rgba(225,29,72,0.4)]'
+              : 'text-slate-300 hover:text-white'
+          }`}
+        >
+          Events
+        </button>
+
+        {/* 5. Evidence with Dropdown */}
+        <div className="relative">
           <button
-            onClick={() => onSelectMode('global')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              activeMode === 'global'
-                ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            onClick={() => {
+              onSelectMode('evidence');
+              setIsEvidenceDropdownOpen(!isEvidenceDropdownOpen);
+            }}
+            className={`flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              activeMode === 'evidence'
+                ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">GLOBAL</span>
+            <span>Evidence</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
 
-          {/* 2. HISTORY */}
-          <button
-            onClick={() => onSelectMode('history')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              activeMode === 'history'
-                ? 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-            title="01 — HOW HAS EARTH CHANGED? (1850-Present Time Machine)"
-          >
-            <History className="w-3.5 h-3.5 text-cyan-300" />
-            <span className="hidden sm:inline">HISTORY</span>
-          </button>
-
-          {/* 3. COUNTRIES */}
-          <button
-            onClick={() => onSelectMode('countries')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              activeMode === 'countries'
-                ? 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-            title="02 — WHERE IS IT CHANGING? (Historical Contribution vs Climate Vulnerability)"
-          >
-            <MapPin className="w-3.5 h-3.5 text-amber-300" />
-            <span className="hidden sm:inline">COUNTRIES</span>
-          </button>
-
-          {/* 4. LIVE EVENTS */}
-          <button
-            onClick={() => onSelectMode('events')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              activeMode === 'events'
-                ? 'bg-rose-600 text-white shadow-[0_0_12px_rgba(225,29,72,0.4)]'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-            }`}
-            title="04 — WHAT IS HAPPENING NOW? (NASA FIRMS & NOAA Telemetry)"
-          >
-            <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-            <span className="hidden sm:inline">LIVE EVENTS</span>
-          </button>
-
-          {/* 5. EVIDENCE with Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                onSelectMode('evidence');
-                setIsEvidenceDropdownOpen(!isEvidenceDropdownOpen);
-              }}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                activeMode === 'evidence'
-                  ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-              title="05 — WHAT DOES IT MEAN & WHAT IS THE EVIDENCE?"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-indigo-300" />
-              <span className="hidden sm:inline">EVIDENCE</span>
-              <ChevronDown className="w-3 h-3 ml-0.5 text-slate-400" />
-            </button>
-
-            {/* Evidence Sub-Menu Dropdown */}
-            {isEvidenceDropdownOpen && (
-              <div className="absolute right-0 top-10 w-48 bg-slate-950/95 backdrop-blur-xl border border-slate-700 rounded-xl p-1.5 shadow-2xl z-50 animate-fadeIn text-xs">
-                <button
-                  onClick={() => {
-                    setIsEvidenceDropdownOpen(false);
-                    onNavigatePage('wiki');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-200 hover:text-cyan-300"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-                  Climate Encyclopedia
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEvidenceDropdownOpen(false);
-                    onNavigatePage('methodology');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-200 hover:text-cyan-300"
-                >
-                  <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                  Methodology & Math
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEvidenceDropdownOpen(false);
-                    onNavigatePage('datasources');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-200 hover:text-cyan-300"
-                >
-                  <Radio className="w-3.5 h-3.5 text-amber-400" />
-                  Primary Data Sources
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEvidenceDropdownOpen(false);
-                    onNavigatePage('about');
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-400 hover:text-white border-t border-slate-800 mt-1 pt-1.5"
-                >
-                  About & Integrity Standards
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Evidence Submenu */}
+          {isEvidenceDropdownOpen && (
+            <div className="absolute right-0 top-10 w-48 bg-slate-950/95 backdrop-blur-xl border border-slate-700 rounded-xl p-1.5 shadow-2xl z-50 animate-fadeIn text-xs">
+              <button
+                onClick={() => {
+                  setIsEvidenceDropdownOpen(false);
+                  onNavigatePage('wiki');
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-200 hover:text-cyan-300"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                Climate Encyclopedia
+              </button>
+              <button
+                onClick={() => {
+                  setIsEvidenceDropdownOpen(false);
+                  onNavigatePage('methodology');
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-200 hover:text-cyan-300"
+              >
+                <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                Methodology
+              </button>
+              <button
+                onClick={() => {
+                  setIsEvidenceDropdownOpen(false);
+                  onNavigatePage('datasources');
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-200 hover:text-cyan-300"
+              >
+                <Radio className="w-3.5 h-3.5 text-amber-400" />
+                Data Sources
+              </button>
+              <button
+                onClick={() => {
+                  setIsEvidenceDropdownOpen(false);
+                  onNavigatePage('about');
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-2 text-slate-400 hover:text-white border-t border-slate-800 mt-1 pt-1.5"
+              >
+                About
+              </button>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Right: Vitals Pill + Search Button */}
+      <div className="flex items-center gap-2">
+        {/* Vital Signs Drawer Trigger */}
+        <button
+          onClick={onOpenVitals}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 text-xs font-semibold text-cyan-300 hover:border-cyan-500/50 hover:bg-slate-800 transition shadow-sm"
+          title="Open Earth's Vital Signs Telemetry"
+        >
+          <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <span className="hidden sm:inline">Vital Signs</span>
+        </button>
 
         {/* Search Target Button */}
         <div className="relative">
@@ -215,7 +213,7 @@ export const MainNavbar: React.FC<MainNavbarProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search India, Brazil, Amazon, Arctic..."
+                placeholder="Search Nepal, India, Brazil, Arctic..."
                 autoFocus
                 className="w-full mt-2 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400"
               />
@@ -244,15 +242,6 @@ export const MainNavbar: React.FC<MainNavbarProps> = ({
             </div>
           )}
         </div>
-
-        {/* Theme / Sun Button */}
-        <button
-          onClick={() => {}}
-          className="w-8 h-8 rounded-full bg-slate-900/80 border border-slate-700/60 flex items-center justify-center text-amber-400 hover:text-amber-300 hover:border-amber-500/50 transition shadow-sm"
-          title="Atmospheric Lighting Mode"
-        >
-          <Sun className="w-4 h-4" />
-        </button>
       </div>
     </nav>
   );
