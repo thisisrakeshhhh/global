@@ -293,20 +293,26 @@ export function App() {
         onFocusCoordinates={handleSelectCountryOrHotspot}
       />
 
-      {/* Footer Navigation Bar */}
-      <footer className="absolute bottom-2 left-0 right-0 z-20 pointer-events-none flex justify-center px-4">
-        <div className="pointer-events-auto flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-950/80 backdrop-blur-md border border-slate-800/80 text-[11px] font-mono text-slate-400">
-          <button onClick={() => setActiveRoute('methodology')} className="hover:text-emerald-400 transition">Methodology</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('datasources')} className="hover:text-emerald-400 transition">Data Sources</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('about')} className="hover:text-emerald-400 transition">About</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('privacy')} className="hover:text-emerald-400 transition">Privacy</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('terms')} className="hover:text-emerald-400 transition">Terms</button>
-          <span>•</span>
-          <button onClick={() => setActiveRoute('contact')} className="hover:text-emerald-400 transition">Contact</button>
+      {/* Footer Navigation & Attribution Bar (Google Earth Style) */}
+      <footer className="absolute bottom-2 left-4 right-4 z-20 pointer-events-none flex flex-wrap items-center justify-between gap-2 text-[11px] font-sans text-slate-400">
+        <div className="pointer-events-auto flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#1e1e1e]/90 backdrop-blur-md border border-white/10 shadow-lg">
+          <button onClick={() => setActiveRoute('methodology')} className="hover:text-white transition">Methodology</button>
+          <span className="text-slate-600">•</span>
+          <button onClick={() => setActiveRoute('datasources')} className="hover:text-white transition">Data Sources</button>
+          <span className="text-slate-600">•</span>
+          <button onClick={() => setActiveRoute('about')} className="hover:text-white transition">About</button>
+          <span className="text-slate-600">•</span>
+          <button onClick={() => setActiveRoute('privacy')} className="hover:text-white transition">Privacy</button>
+          <span className="text-slate-600">•</span>
+          <button onClick={() => setActiveRoute('terms')} className="hover:text-white transition">Terms</button>
+          <span className="text-slate-600">•</span>
+          <button onClick={() => setActiveRoute('contact')} className="hover:text-white transition">Contact</button>
+        </div>
+
+        <div className="hidden md:flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#1e1e1e]/90 backdrop-blur-md border border-white/10 shadow-lg text-[10px] font-mono text-slate-400">
+          <span>Data: NASA FIRMS • NOAA NHC • Copernicus</span>
+          <span className="text-slate-600">•</span>
+          <span>Verified Telemetry</span>
         </div>
       </footer>
     </div>
