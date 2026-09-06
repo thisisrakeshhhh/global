@@ -463,14 +463,25 @@ export async function getCycloneTelemetry() {
  * 3. Freshness Telemetry Reports
  */
 export function getFreshnessTelemetry() {
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  // Dynamic scientific publication cadence:
+  // NOAA MLO publishes monthly in-situ Keeling Curve CO2 means on the 1st of each month
+  const mloMonthOffset = now.getUTCDate() < 5 ? 1 : 0;
+  const mloDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - mloMonthOffset, 1));
+  const mloObservationUtc = mloDate.toISOString().slice(0, 10) + 'T00:00:00Z';
+
+  // Copernicus ECMWF ERA5 reanalysis bulletin is finalized at the close of each preceding month (~5 day latency)
+  const era5Date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 0, 0));
+  const era5ObservationUtc = era5Date.toISOString().slice(0, 19) + 'Z';
 
   const mloFreshness = {
     sourceId: 'mlo',
     sourceName: 'NOAA Mauna Loa Observatory (MLO)',
     category: 'UPDATED OBSERVATION',
     state: 'UPDATED',
-    latestObservationUtc: '2026-09-01T00:00:00Z',
+    latestObservationUtc: mloObservationUtc,
     lastIngestedUtc: nowIso,
     latencyMinutes: 1440,
     statusMessage: 'Monthly mean in-situ atmospheric CO₂ monitoring (Keeling Curve)'
@@ -481,7 +492,7 @@ export function getFreshnessTelemetry() {
     sourceName: 'Copernicus Climate Change Service (ERA5)',
     category: 'REANALYSIS / HISTORICAL',
     state: 'REANALYSIS',
-    latestObservationUtc: '2026-08-31T23:00:00Z',
+    latestObservationUtc: era5ObservationUtc,
     lastIngestedUtc: nowIso,
     latencyMinutes: 7200,
     statusMessage: 'Global atmospheric reanalysis 5th generation (ECMWF)'

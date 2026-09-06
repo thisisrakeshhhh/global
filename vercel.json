@@ -1,15 +1,14 @@
-﻿{
+{
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/api/telemetry/fires/:id",
-      "destination": "/api/telemetry/fires?id=:id"
+      "source": "/api/(.*)",
+      "destination": "/api/"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -17,9 +16,18 @@
     {
       "source": "/api/telemetry/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
-        { "key": "Cache-Control", "value": "public, s-maxage=180, stale-while-revalidate=360" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=180, stale-while-revalidate=360"
+        }
       ]
     }
   ]

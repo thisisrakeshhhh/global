@@ -150,7 +150,16 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
     }));
   }
 
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  const mloMonthOffset = now.getUTCDate() < 5 ? 1 : 0;
+  const mloDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - mloMonthOffset, 1));
+  const mloObservationUtc = mloDate.toISOString().slice(0, 10) + 'T00:00:00Z';
+
+  const era5Date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 0, 0));
+  const era5ObservationUtc = era5Date.toISOString().slice(0, 19) + 'Z';
+
   return [
     {
       sourceId: 'firms',
@@ -177,7 +186,7 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
       sourceName: 'NOAA Mauna Loa Observatory (MLO)',
       category: 'UPDATED OBSERVATION',
       state: 'UPDATED',
-      latestObservationUtc: '2026-09-01T00:00:00Z',
+      latestObservationUtc: mloObservationUtc,
       lastIngestedUtc: nowIso,
       latencyMinutes: 1440,
       statusMessage: 'Monthly mean in-situ atmospheric CO₂ monitoring (Keeling Curve)'
@@ -187,7 +196,7 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
       sourceName: 'Copernicus Climate Change Service (ERA5)',
       category: 'REANALYSIS / HISTORICAL',
       state: 'REANALYSIS',
-      latestObservationUtc: '2026-08-31T23:00:00Z',
+      latestObservationUtc: era5ObservationUtc,
       lastIngestedUtc: nowIso,
       latencyMinutes: 7200,
       statusMessage: 'Global atmospheric reanalysis 5th generation (ERA5)'
