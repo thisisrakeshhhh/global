@@ -542,23 +542,23 @@ export const AUSTRALIA_WILDFIRE_STORY: EventStory = {
 };
 
 /**
- * Retrieve primary featured stories (dynamically populated)
+ * Retrieve primary featured stories (dynamically populated across regions)
  */
 export function getFeaturedStories(
   fireClusters: FireCluster[],
   cyclones: NOAACycloneEvent[]
 ): EventStory[] {
-  const stories: EventStory[] = [NEPAL_FLOOD_STORY];
+  const stories: EventStory[] = [NEPAL_FLOOD_STORY, AUSTRALIA_WILDFIRE_STORY];
 
-  // If there are real active fire clusters from satellite, format top one or use Australia
+  // Convert top fire clusters from different geographic regions (e.g. Amazon, Mediterranean, Canada)
   if (fireClusters.length > 0) {
-    const topCluster = [...fireClusters].sort((a, b) => b.maxFRP - a.maxFRP)[0];
-    stories.push(createStoryFromFireCluster(topCluster));
-  } else {
-    stories.push(AUSTRALIA_WILDFIRE_STORY);
+    const additionalClusters = fireClusters.filter(c => !c.regionName.toLowerCase().includes('australia'));
+    for (const cluster of additionalClusters.slice(0, 3)) {
+      stories.push(createStoryFromFireCluster(cluster));
+    }
   }
 
-  // If there are real cyclones, add the most severe one
+  // If there are real cyclones, add them
   if (cyclones.length > 0) {
     stories.push(createStoryFromCyclone(cyclones[0]));
   }

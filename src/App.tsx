@@ -94,6 +94,7 @@ export function App() {
   // Modal / Drawer States
   const [isVitalsOpen, setIsVitalsOpen] = useState<boolean>(false);
   const [activeStory, setActiveStory] = useState<EventStory | null>(null);
+  const [isDossierOpen, setIsDossierOpen] = useState<boolean>(false);
 
   // Selection & Inspector States
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; distance?: number } | null>(null);
@@ -137,15 +138,13 @@ export function App() {
   const handleSelectPresentationMode = (mode: PresentationMode) => {
     setPresentationMode(mode);
     setAutoRotate(mode === 'explore');
+    setIsDossierOpen(false);
 
     if (mode === 'history') {
       setTimeDomain('observed');
       setActiveLayer('temperature');
     } else if (mode === 'countries') {
       setTimeDomain('live');
-      if (!selectedCountryProfile) {
-        setSelectedCountryProfile(SCIENTIFIC_COUNTRY_INTELLIGENCE[0]);
-      }
     } else if (mode === 'events') {
       setTimeDomain('live');
       setActiveLayer('forests');
@@ -170,6 +169,7 @@ export function App() {
 
   const handleSelectCountryFromBar = (country: ScientificCountryProfile) => {
     setSelectedCountryProfile(country);
+    setIsDossierOpen(true);
     setAutoRotate(false);
     setFocusTarget({ lat: country.lat, lng: country.lng, distance: 3.2 });
   };
@@ -179,17 +179,8 @@ export function App() {
     setFocusTarget({ lat, lng, distance });
   };
 
-  let activeCountryDossier: ScientificCountryProfile | null = selectedCountryProfile;
-  let activeTippingPoint: TippingPoint | null = null;
-
-  if (selectedEntity) {
-    if (selectedEntity.type === 'country') {
-      const legacy = selectedEntity.data as { id: string };
-      activeCountryDossier = getCountryProfile(legacy.id) || SCIENTIFIC_COUNTRY_INTELLIGENCE[0];
-    } else {
-      activeTippingPoint = selectedEntity.data as TippingPoint;
-    }
-  }
+  let activeCountryDossier: ScientificCountryProfile | null = isDossierOpen ? (selectedCountryProfile || (selectedEntity?.type === 'country' ? getCountryProfile((selectedEntity.data as { id: string }).id) || null : null)) : null;
+  let activeTippingPoint: TippingPoint | null = isDossierOpen && selectedEntity?.type === 'tipping_point' ? (selectedEntity.data as TippingPoint) : null;
 
   // Get active featured stories
   const featuredStories = getFeaturedStories(fireClusters, cyclones);
@@ -282,7 +273,7 @@ export function App() {
                 See the places where Earth's climate is changing — and understand why.
               </p>
               <button
-                onClick={() => handleOpenEventStory(NEPAL_FLOOD_STORY)}
+                onClick={() => handleSelectPresentationMode('events')}
                 className="mt-6 px-6 py-2.5 rounded-full bg-slate-100 hover:bg-white text-slate-950 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group cursor-pointer"
               >
                 <span>Explore today's events</span>
