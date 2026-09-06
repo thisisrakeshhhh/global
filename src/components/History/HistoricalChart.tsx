@@ -37,6 +37,11 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   } else if (indicator === 'ocean') {
     const oceans = ClimateHistoryService.getFilteredOcean(timeRange);
     dataPoints = oceans.map(o => ({ year: o.year, val: o.sstAnomaly }));
+  } else if (indicator === 'oceanHeat') {
+    const oceanHeats = ClimateHistoryService.getFilteredOceanHeat(timeRange);
+    dataPoints = oceanHeats.map(h => ({ year: h.year, val: h.ohc2000mZJ, era: h.era }));
+    eraBreakYear = 2005;
+    eraBreakLabel = '2005: Global Argo Autonomous Float Array Active';
   } else if (indicator === 'seaIce') {
     const ices = ClimateHistoryService.getFilteredSeaIce(timeRange);
     dataPoints = ices.map(i => ({ year: i.year, val: i.arcticMinMkm2, era: i.era }));
@@ -311,6 +316,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 {hoveredPoint.era === 'satellite' ? '📡 Satellite passive microwave' :
                  hoveredPoint.era === 'in_situ' ? '🔬 In-situ spectroscopic observation' :
                  hoveredPoint.era === 'satellite_altimetry' ? '🛰️ Precision radar altimetry' :
+                 hoveredPoint.era === 'argo_array' ? '🤖 Global Argo autonomous profiling float array' :
+                 hoveredPoint.era === 'expendable_bathythermograph' ? '🚢 Shipboard expendable bathythermograph (XBT)' :
                  '📜 Historical reconstruction'}
               </div>
             )}

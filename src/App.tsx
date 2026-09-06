@@ -101,6 +101,7 @@ export function App() {
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; distance?: number } | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<InteractiveEntity | null>(null);
   const [selectedCountryProfile, setSelectedCountryProfile] = useState<ScientificCountryProfile | null>(null);
+  const [activeHistoryIndicator, setActiveHistoryIndicator] = useState<'temperature' | 'co2' | 'ocean' | 'oceanHeat' | 'seaIce' | 'seaLevel'>('temperature');
 
   // Fetch telemetry from centralized server API client
   const loadTelemetry = useCallback(async () => {
@@ -166,6 +167,18 @@ export function App() {
       lng: story.mapConfig.centerLng,
       distance: 3.2
     });
+  };
+
+  // Deep-link from Event Story to History Layer
+  const handleExploreHistoryFromStory = (indicator?: string, year?: number) => {
+    setActiveStory(null);
+    if (indicator && ['temperature', 'co2', 'ocean', 'oceanHeat', 'seaIce', 'seaLevel'].includes(indicator)) {
+      setActiveHistoryIndicator(indicator as any);
+    }
+    if (year) {
+      setSelectedYear(year);
+    }
+    handleSelectPresentationMode('history');
   };
 
   const handleSelectCountryFromBar = (country: ScientificCountryProfile) => {
@@ -293,6 +306,7 @@ export function App() {
             <HistoryPage
               selectedYear={selectedYear}
               onYearChange={(yr) => setSelectedYear(yr)}
+              initialIndicator={activeHistoryIndicator}
             />
           </div>
         )}
@@ -342,6 +356,7 @@ export function App() {
       <EventStoryModal
         story={activeStory}
         onClose={() => setActiveStory(null)}
+        onExploreHistory={handleExploreHistoryFromStory}
       />
 
       {/* Scientific Country & Tipping Point 2-Pillar Dossier */}

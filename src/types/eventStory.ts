@@ -52,6 +52,8 @@ export interface HistoricalClimateContext {
   cryosphereTrend?: string;     // e.g. "Rapid Himalayan glacier retreat and moraine destabilization (ICIMOD 2023)"
   attributionGuardrail: string; // Explicit distinction: event is not automatic proof, but background risk has shifted
   citations: string[];
+  linkedIndicator?: 'temperature' | 'co2' | 'ocean' | 'oceanHeat' | 'seaIce' | 'seaLevel';
+  linkedHistoryYear?: number;
 }
 
 export interface EventStory {

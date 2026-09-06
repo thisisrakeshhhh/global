@@ -179,7 +179,9 @@ export const NEPAL_FLOOD_STORY: EventStory = {
       'ICIMOD: "Water, Ice, Society, and Ecosystems in the Hindu Kush Himalaya" (2023)',
       'IPCC AR6 WGII Chapter 10: "Asia — Mountains and River Basins"',
       'Department of Hydrology and Meteorology (DHM), Government of Nepal'
-    ]
+    ],
+    linkedIndicator: 'temperature',
+    linkedHistoryYear: 2026
   },
 
   evidenceSources: {
@@ -316,7 +318,9 @@ export function createStoryFromFireCluster(cluster: FireCluster): EventStory {
         'NASA Earth Science Data and Information System (ESDIS)',
         'Global Wildfire Information System (GWIS)',
         'Copernicus Atmosphere Monitoring Service (CAMS)'
-      ]
+      ],
+      linkedIndicator: 'co2',
+      linkedHistoryYear: 2026
     },
 
     evidenceSources: {
@@ -442,7 +446,9 @@ export function createStoryFromCyclone(cyclone: NOAACycloneEvent): EventStory {
         'NOAA Geophysical Fluid Dynamics Laboratory (GFDL)',
         'IPCC AR6 Working Group 1 Chapter 11: Extreme Weather',
         'Knutson et al., Bulletin of the American Meteorological Society'
-      ]
+      ],
+      linkedIndicator: 'ocean',
+      linkedHistoryYear: 2026
     },
 
     evidenceSources: {

@@ -8,16 +8,25 @@ import { BookOpen, ShieldCheck, Database, ArrowRight, Clock, Sparkles } from 'lu
 interface HistoryPageProps {
   selectedYear: number;
   onYearChange: (year: number) => void;
+  initialIndicator?: IndicatorType;
   onClose?: () => void;
 }
 
 export const HistoryPage: React.FC<HistoryPageProps> = ({
   selectedYear,
   onYearChange,
+  initialIndicator = 'temperature',
   onClose
 }) => {
-  const [activeIndicator, setActiveIndicator] = useState<IndicatorType>('temperature');
+  const [activeIndicator, setActiveIndicator] = useState<IndicatorType>(initialIndicator);
   const [timeRange, setTimeRange] = useState<TimeRangeType>('all');
+
+  // Sync if initialIndicator changes externally
+  React.useEffect(() => {
+    if (initialIndicator) {
+      setActiveIndicator(initialIndicator);
+    }
+  }, [initialIndicator]);
 
   const milestones = ClimateHistoryService.getMilestones();
   const activeMilestone = ClimateHistoryService.getMilestoneByYear(selectedYear) || milestones[milestones.length - 1];
@@ -44,15 +53,15 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({
         {/* Global Summary Metric Callout */}
         <div className="flex items-center gap-4 bg-slate-900/80 border border-slate-800 rounded-xl p-3 px-4">
           <div>
-            <div className="text-[11px] text-slate-400 uppercase tracking-wider">Current Warming</div>
+            <div className="text-[11px] text-slate-400 uppercase tracking-wider">Observed Anomaly</div>
             <div className="text-xl font-bold text-orange-400">+1.33°C</div>
-            <div className="text-[10px] text-slate-400">vs 1850–1900 baseline</div>
+            <div className="text-[10px] text-slate-400">NASA GISTEMP (vs 1850–1900)</div>
           </div>
           <div className="h-8 w-px bg-slate-800" />
           <div>
             <div className="text-[11px] text-slate-400 uppercase tracking-wider">Atmospheric CO₂</div>
             <div className="text-xl font-bold text-sky-400">429.1 ppm</div>
-            <div className="text-[10px] text-slate-400">NOAA Mauna Loa</div>
+            <div className="text-[10px] text-slate-400">NOAA Mauna Loa in-situ</div>
           </div>
         </div>
       </div>

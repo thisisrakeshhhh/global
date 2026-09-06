@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, MapPin, AlertCircle, ExternalLink, ShieldCheck, BookOpen, Clock, Newspaper, Activity } from 'lucide-react';
+import { X, MapPin, AlertCircle, ExternalLink, ShieldCheck, BookOpen, Clock, Newspaper, Activity, ArrowRight, TrendingUp } from 'lucide-react';
 import { EventStory } from '../../types/eventStory';
 import { RegionalLocalMap } from '../Map/RegionalLocalMap';
 import { audioController } from '../../utils/audioController';
@@ -7,9 +6,10 @@ import { audioController } from '../../utils/audioController';
 interface EventStoryModalProps {
   story: EventStory | null;
   onClose: () => void;
+  onExploreHistory?: (indicator?: string, year?: number) => void;
 }
 
-export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose }) => {
+export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose, onExploreHistory }) => {
   if (!story) return null;
 
   const handleClose = () => {
@@ -284,6 +284,26 @@ export const EventStoryModal: React.FC<EventStoryModalProps> = ({ story, onClose
                 <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <span>{story.historicalContext.attributionGuardrail}</span>
               </div>
+
+              {/* Actionable Link into Planetary History Layer */}
+              {onExploreHistory && (
+                <div className="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="text-xs text-slate-400 flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>See how this regional pattern compares with global observational records:</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onExploreHistory(story.historicalContext.linkedIndicator || 'temperature', story.historicalContext.linkedHistoryYear || 2026);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/40 text-xs font-semibold transition cursor-pointer self-start sm:self-auto"
+                  >
+                    <span>Explore Climate History ({story.historicalContext.linkedIndicator || 'Temperature'})</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           </section>
 

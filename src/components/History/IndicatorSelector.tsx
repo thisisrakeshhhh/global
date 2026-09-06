@@ -1,6 +1,6 @@
 import React from 'react';
 import { IndicatorType, INDICATOR_METADATA } from '../../services/climateHistoryService';
-import { Thermometer, Cloud, Waves, Snowflake, TrendingUp } from 'lucide-react';
+import { Thermometer, Cloud, Waves, Flame, Snowflake, TrendingUp } from 'lucide-react';
 
 interface IndicatorSelectorProps {
   selectedIndicator: IndicatorType;
@@ -12,9 +12,10 @@ export const IndicatorSelector: React.FC<IndicatorSelectorProps> = ({
   onSelectIndicator
 }) => {
   const indicators: { id: IndicatorType; label: string; icon: React.ReactNode }[] = [
-    { id: 'temperature', label: 'Temperature', icon: <Thermometer className="w-3.5 h-3.5" /> },
+    { id: 'temperature', label: 'Surface Temp', icon: <Thermometer className="w-3.5 h-3.5" /> },
     { id: 'co2', label: 'Atmospheric CO₂', icon: <Cloud className="w-3.5 h-3.5" /> },
-    { id: 'ocean', label: 'Ocean Heat & SST', icon: <Waves className="w-3.5 h-3.5" /> },
+    { id: 'ocean', label: 'Sea Surface Temp', icon: <Waves className="w-3.5 h-3.5" /> },
+    { id: 'oceanHeat', label: 'Ocean Heat (0–2000m)', icon: <Flame className="w-3.5 h-3.5" /> },
     { id: 'seaIce', label: 'Arctic Sea Ice', icon: <Snowflake className="w-3.5 h-3.5" /> },
     { id: 'seaLevel', label: 'Sea Level Rise', icon: <TrendingUp className="w-3.5 h-3.5" /> }
   ];
