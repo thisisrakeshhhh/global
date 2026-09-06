@@ -11,11 +11,14 @@ import { LiveEventModal } from './components/UI/LiveEventModal';
 import { ScenarioComparisonModal } from './components/UI/ScenarioComparisonModal';
 import { GuidedTourModal } from './components/UI/GuidedTourModal';
 import { LegendBar } from './components/UI/LegendBar';
+import { CauseEventImpactCard } from './components/UI/CauseEventImpactCard';
+import { AdSenseSlot } from './components/UI/AdSenseSlot';
 import { InteractiveEntity } from './components/Globe/HotspotsPillars';
 import { TimeDomain, SSPScenario, LiveEvent, ScientificCountryProfile } from './types/climateIntelligence';
 import { SCIENTIFIC_COUNTRY_INTELLIGENCE, getCountryProfile } from './services/countryIntelligenceService';
-import { fetchLiveDisasterEvents, clearLiveTelemetryCache } from './services/liveTelemetryService';
+import { fetchLiveDisasterEvents, clearLiveTelemetryCache, getTelemetrySyncStatus, TelemetrySyncStatus } from './services/liveTelemetryService';
 import { TippingPoint } from './data/tippingPoints';
+import { Sparkles, Layers, ArrowRight } from 'lucide-react';
 
 export function App() {
   const [timeDomain, setTimeDomain] = useState<TimeDomain>('live');
@@ -28,6 +31,8 @@ export function App() {
   // Live Telemetry state
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [isLoadingLive, setIsLoadingLive] = useState<boolean>(true);
+  const [syncStatus, setSyncStatus] = useState<TelemetrySyncStatus>(getTelemetrySyncStatus());
+  const [showAnalysisDrawer, setShowAnalysisDrawer] = useState<boolean>(false);
 
   // Camera & Selection states
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; distance?: number } | null>(null);
@@ -36,20 +41,39 @@ export function App() {
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState<boolean>(false);
 
-  const loadTelemetry = async () => {
+  const loadTelemetry = async (force: boolean = false) => {
     setIsLoadingLive(true);
-    const events = await fetchLiveDisasterEvents();
+    const events = await fetchLiveDisasterEvents(force);
     setLiveEvents(events);
+    setSyncStatus(getTelemetrySyncStatus());
     setIsLoadingLive(false);
   };
 
+  // Initial load
   useEffect(() => {
     loadTelemetry();
   }, []);
 
-  const handleRefreshLive = async () => {
+  // Background Auto-Refresh every 3 minutes (180 seconds)
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      loadTelemetry(true);
+    }, 180000);
+
+    // Also update elapsed seconds counter every 10 seconds
+    const statusInterval = setInterval(() => {
+      setSyncStatus(getTelemetrySyncStatus());
+    }, 10000);
+
+    return () => {
+      clearInterval(refreshInterval);
+      clearInterval(statusInterval);
+    };
+  }, []);
+
+  const handleManualRefresh = async () => {
     clearLiveTelemetryCache();
-    await loadTelemetry();
+    await loadTelemetry(true);
   };
 
   const handleSelectCountryOrHotspot = (lat: number, lng: number, distance: number = 3.5) => {
@@ -105,7 +129,7 @@ export function App() {
         liveEvents={liveEvents}
       />
 
-      {/* Top Telemetry Header HUD */}
+      {/* Clean Top Header HUD with 5-Second Vital Telemetry */}
       <HeaderHUD
         autoRotate={autoRotate}
         onToggleAutoRotate={() => setAutoRotate(!autoRotate)}
@@ -115,6 +139,9 @@ export function App() {
         }}
         onSelectCountryOrHotspot={handleSelectCountryOrHotspot}
         currentTimeDomain={timeDomain}
+        syncStatus={syncStatus}
+        onRefreshTelemetry={handleManualRefresh}
+        isLoadingLive={isLoadingLive}
       />
 
       {/* Central Time Domain Switcher (Live vs Observed vs Projected) */}
@@ -123,8 +150,8 @@ export function App() {
         onSelectDomain={handleTimeDomainChange}
       />
 
-      {/* Clean Left-Side Controls Cluster */}
-      <div className="absolute left-3 sm:left-5 top-20 sm:top-20 z-20 flex flex-col gap-3 pointer-events-none max-h-[82vh] overflow-y-auto no-scrollbar">
+      {/* Clean Left-Side Controls Column */}
+      <div className="absolute left-3 sm:left-4 top-16 sm:top-16 z-20 flex flex-col gap-2 pointer-events-none max-h-[85vh] overflow-y-auto no-scrollbar">
         <LayerSelector
           activeLayer={activeLayer}
           onSelectLayer={(layer) => setActiveLayer(layer)}
@@ -136,14 +163,26 @@ export function App() {
         />
 
         <LegendBar activeLayer={activeLayer} />
+
+        {/* Button to open Cause ➔ Event ➔ Impact & AdSense Panel */}
+        <button
+          onClick={() => setShowAnalysisDrawer(!showAnalysisDrawer)}
+          className="pointer-events-auto flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/90 border border-cyan-500/30 text-[11px] font-mono text-cyan-300 hover:text-white hover:bg-slate-900 transition-colors shadow-xl"
+        >
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Cause ➔ Impact Analysis</span>
+          </span>
+          <ArrowRight className={`w-3 h-3 transition-transform ${showAnalysisDrawer ? 'rotate-90' : ''}`} />
+        </button>
       </div>
 
-      {/* Live Events Drawer (Exclusively on the Right Side in LIVE mode) */}
+      {/* Live Events Drawer (On Right Side in LIVE mode) */}
       {timeDomain === 'live' && (
         <LiveEventsDrawer
           events={liveEvents}
           isLoading={isLoadingLive}
-          onRefresh={handleRefreshLive}
+          onRefresh={handleManualRefresh}
           onSelectEvent={(ev) => setSelectedLiveEvent(ev)}
           onLocateEvent={handleSelectCountryOrHotspot}
         />
@@ -157,6 +196,16 @@ export function App() {
         selectedSSP={selectedSSP}
         onOpenScenarioModal={() => setIsScenarioModalOpen(true)}
       />
+
+      {/* Expandable Cause ➔ Event ➔ Impact & AdSense Drawer */}
+      {showAnalysisDrawer && (
+        <div className="fixed inset-x-0 bottom-16 sm:bottom-20 z-30 max-h-[70vh] overflow-y-auto p-3 flex flex-col items-center pointer-events-none animate-fadeIn">
+          <div className="w-full max-w-4xl pointer-events-auto space-y-2">
+            <CauseEventImpactCard />
+            <AdSenseSlot />
+          </div>
+        </div>
+      )}
 
       {/* Live Event Satellite Alert Modal */}
       <LiveEventModal
