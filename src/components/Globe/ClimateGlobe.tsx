@@ -8,7 +8,13 @@ import {
 } from '../../utils/textureGenerator';
 import { latLngToVector3 } from '../../utils/geoHelpers';
 import { audioController } from '../../utils/audioController';
-import { TimeDomain, LiveEvent } from '../../types/climateIntelligence';
+import { 
+  TimeDomain, 
+  LiveEvent, 
+  FireCluster, 
+  FireDetectionPoint, 
+  NOAACycloneEvent 
+} from '../../types/climateIntelligence';
 
 export type ClimateLayer = 'temperature' | 'emissions' | 'oceans' | 'ice' | 'forests';
 
@@ -20,7 +26,13 @@ interface ClimateGlobeProps {
   focusTarget: { lat: number; lng: number; distance?: number } | null;
   onSelectEntity: (entity: InteractiveEntity | null) => void;
   onSelectLiveEvent: (event: LiveEvent | null) => void;
-  liveEvents: LiveEvent[];
+  onSelectCluster?: (cluster: FireCluster | null) => void;
+  onSelectCyclone?: (cyclone: NOAACycloneEvent | null) => void;
+  onSelectPoint?: (point: FireDetectionPoint | null) => void;
+  liveEvents?: LiveEvent[];
+  fireClusters?: FireCluster[];
+  cyclones?: NOAACycloneEvent[];
+  expandedCluster?: FireCluster | null;
 }
 
 export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
@@ -31,7 +43,13 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
   focusTarget,
   onSelectEntity,
   onSelectLiveEvent,
-  liveEvents
+  onSelectCluster,
+  onSelectCyclone,
+  onSelectPoint,
+  liveEvents = [],
+  fireClusters = [],
+  cyclones = [],
+  expandedCluster = null
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -224,7 +242,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
       if (!cameraRef.current) return;
       raycaster.setFromCamera(mouseCoord, cameraRef.current);
 
-      // Check live events first
+      // Check live events & telemetry clusters first
       if (liveEventsManagerRef.current && liveEventsManagerRef.current.getMeshGroup().visible) {
         const eventTargets = liveEventsManagerRef.current.interactiveObjects.map((o) => o.mesh);
         const eventHits = raycaster.intersectObjects(eventTargets, true);
@@ -232,8 +250,16 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
           const hit = eventHits[0].object;
           const found = liveEventsManagerRef.current.interactiveObjects.find((o) => o.mesh === hit);
           if (found) {
-            audioController.playAlarm();
-            onSelectLiveEvent(found.event);
+            audioController.playSelect();
+            if (found.item.type === 'cluster') {
+              onSelectCluster?.(found.item.data);
+            } else if (found.item.type === 'cyclone') {
+              onSelectCyclone?.(found.item.data);
+            } else if (found.item.type === 'point') {
+              onSelectPoint?.(found.item.data);
+            } else if (found.item.type === 'event') {
+              onSelectLiveEvent?.(found.item.data);
+            }
             return;
           }
         }
@@ -296,7 +322,7 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
       }
 
       if (hotspotsManagerRef.current) hotspotsManagerRef.current.update(elapsedTime);
-      if (liveEventsManagerRef.current) liveEventsManagerRef.current.update(elapsedTime);
+      if (liveEventsManagerRef.current) liveEventsManagerRef.current.animate();
 
       renderer.render(scene, camera);
     };
@@ -342,15 +368,18 @@ export const ClimateGlobe: React.FC<ClimateGlobeProps> = ({
     }
   }, [selectedYear]);
 
-  // Update time domain visibility & live event meshes
+  // Update time domain visibility & live telemetry meshes
   useEffect(() => {
     if (liveEventsManagerRef.current) {
-      liveEventsManagerRef.current.setVisible(timeDomain === 'live');
-      if (liveEvents && liveEvents.length > 0) {
-        liveEventsManagerRef.current.updateEvents(liveEvents);
-      }
+      liveEventsManagerRef.current.getMeshGroup().visible = (timeDomain === 'live');
+      liveEventsManagerRef.current.renderTelemetry(
+        fireClusters,
+        cyclones,
+        expandedCluster,
+        liveEvents
+      );
     }
-  }, [timeDomain, liveEvents]);
+  }, [timeDomain, fireClusters, cyclones, expandedCluster, liveEvents]);
 
   // Handle camera fly-to focusTarget
   useEffect(() => {

@@ -15,6 +15,13 @@ interface HeaderHUDProps {
   syncStatus: TelemetrySyncStatus;
   onRefreshTelemetry: () => void;
   isLoadingLive: boolean;
+  onOpenMethodology?: () => void;
+  onOpenDataSources?: () => void;
+  onOpenAbout?: () => void;
+  activeSensorFilter?: 'ALL' | 'VIIRS' | 'MODIS';
+  onSelectSensorFilter?: (filter: 'ALL' | 'VIIRS' | 'MODIS') => void;
+  clusterCount?: number;
+  cycloneCount?: number;
 }
 
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({
@@ -24,7 +31,14 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   onSelectCountryOrHotspot,
   syncStatus,
   onRefreshTelemetry,
-  isLoadingLive
+  isLoadingLive,
+  onOpenMethodology,
+  onOpenDataSources,
+  onOpenAbout,
+  activeSensorFilter = 'ALL',
+  onSelectSensorFilter,
+  clusterCount = 0,
+  cycloneCount = 0
 }) => {
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [utcTime, setUtcTime] = useState<string>('');
@@ -120,6 +134,50 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
             <span className="text-slate-500">Storms:</span>
             <span className="font-bold text-cyan-400">{syncStatus.totalStormsCount} tracked</span>
           </div>
+        </div>
+
+        {/* Navigation & Documentation Links */}
+        <div className="hidden lg:flex items-center gap-2 text-xs">
+          {onOpenMethodology && (
+            <button
+              onClick={onOpenMethodology}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition"
+            >
+              Methodology
+            </button>
+          )}
+          {onOpenDataSources && (
+            <button
+              onClick={onOpenDataSources}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition"
+            >
+              Data Sources
+            </button>
+          )}
+          {onOpenAbout && (
+            <button
+              onClick={onOpenAbout}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition"
+            >
+              About
+            </button>
+          )}
+
+          {/* Sensor Filter */}
+          {onSelectSensorFilter && (
+            <div className="flex items-center gap-0.5 bg-slate-900/80 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+              <span className="text-slate-500 px-1">SENSOR:</span>
+              {(['ALL', 'VIIRS', 'MODIS'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => onSelectSensorFilter(f)}
+                  className={`px-1.5 py-0.5 rounded ${activeSensorFilter === f ? 'bg-orange-600 text-white font-bold' : 'text-slate-400 hover:text-white'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Action Controls */}

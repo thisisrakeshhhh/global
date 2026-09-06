@@ -5,6 +5,7 @@ interface AdSenseSlotProps {
   slotId?: string;
   adClient?: string;
   className?: string;
+  format?: string;
 }
 
 /**

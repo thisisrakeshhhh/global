@@ -2,6 +2,116 @@ export type TimeDomain = 'live' | 'observed' | 'projected';
 
 export type SSPScenario = 'SSP1-2.6' | 'SSP2-4.5' | 'SSP5-8.5';
 
+export type FreshnessCategory = 'NEAR-REAL-TIME SATELLITE' | 'UPDATED OBSERVATION' | 'REANALYSIS / HISTORICAL';
+export type FreshnessState = 'LIVE' | 'NEAR-REAL-TIME' | 'UPDATED' | 'REANALYSIS' | 'DELAYED' | 'NO_DATA';
+
+export interface DataProvenance {
+  source: 'NASA FIRMS' | 'NOAA NHC' | 'NASA EONET' | 'NOAA MLO' | 'Copernicus ERA5' | 'NASA GISTEMP';
+  dataset: string;           // e.g. "VIIRS NOAA-21 NRT", "NOAA NHC Tropical Cyclone Advisory"
+  observationTime: string;   // UTC ISO string
+  ingestionTime: string;     // UTC ISO string
+  processingVersion: string; // e.g. "v1.0-grid1.5"
+  sourceUrl: string;
+}
+
+export interface NormalizedConfidence {
+  value: number | null; // 0 - 100% or null
+  level: 'low' | 'nominal' | 'high' | 'unknown';
+  sourceField: string;  // Raw source representation (e.g. "h", "nominal", "94%")
+}
+
+export interface FireDetectionPoint {
+  id: string;
+  lat: number;
+  lng: number;
+  brightness: number; // Kelvin
+  frp: number;        // MW
+  confidence: NormalizedConfidence;
+  satellite: string;  // e.g. "NOAA-20 VIIRS", "Terra MODIS"
+  acqDate: string;
+  acqTime: string;
+  daynight: 'D' | 'N';
+}
+
+export interface FireCluster {
+  id: string;
+  lat: number;
+  lng: number;
+  gridKey: string;           // e.g. "lat_-12.0_lng_-55.5" (1.5° bin)
+  detectionCount: number;
+  totalFRP: number;          // Sum of FRP in MW
+  maxFRP: number;            // Highest single FRP in MW
+  averageConfidence: number; // Mean confidence %
+  latestObservation: string; // Latest UTC ISO
+  satellites: string[];      // Unique satellite instruments
+  regionName: string;
+  points?: FireDetectionPoint[]; // Populated when inspected/zoomed
+  provenance: DataProvenance;
+}
+
+export interface NOAACycloneForecastPoint {
+  forecastHour: number; // 12, 24, 36, 48, 72
+  validTimeUtc: string;
+  lat: number;
+  lng: number;
+  maxWindsKts: number;
+  category: string;
+}
+
+export interface NOAACycloneEvent {
+  id: string;
+  stormName: string;
+  basin: string;              // "Atlantic", "Eastern Pacific", "Central Pacific"
+  category: string;           // "Tropical Depression", "Tropical Storm", "Category 1-5 Hurricane"
+  currentLat: number;
+  currentLng: number;
+  maxSustainedWindsKts: number;
+  maxSustainedWindsMph: number;
+  centralPressureMb: number;
+  advisoryNumber: string;
+  advisoryTimeUtc: string;
+  forecastTrack: NOAACycloneForecastPoint[];
+  provenance: DataProvenance;
+}
+
+export interface ScientificAttribution {
+  observation: {
+    description: string;
+    instrument: string;
+    timestampUtc: string;
+    confidenceTag: 'OBSERVED';
+  };
+  event: {
+    classification: string;
+    intensityMetric: string;
+    confidenceTag: 'HIGH CONFIDENCE' | 'ESTIMATED';
+  };
+  possibleDrivers: {
+    factors: string[];
+    caveat: string;
+    confidenceTag: 'POSSIBLE DRIVER';
+  };
+  potentialImpacts: {
+    consequences: string[];
+    confidenceTag: 'HIGH CONFIDENCE' | 'ESTIMATED';
+  };
+  evidenceAndCitations: {
+    datasets: string[];
+    doiOrUrl?: string;
+  };
+}
+
+export interface SourceFreshnessReport {
+  sourceId: string;
+  sourceName: string;
+  category: FreshnessCategory;
+  state: FreshnessState;
+  latestObservationUtc: string;
+  lastIngestedUtc: string;
+  latencyMinutes: number;
+  statusMessage: string;
+}
+
 export interface LiveEvent {
   id: string;
   type: 'wildfire' | 'cyclone' | 'flood' | 'extreme_heat' | 'drought' | 'volcano';
@@ -9,25 +119,28 @@ export interface LiveEvent {
   location: string;
   lat: number;
   lng: number;
-  detectedAt: string; // Human relative or exact date
-  exactUtcTimestamp: string; // Real ISO 8601 string from satellite: e.g. "2026-09-04T13:03:00Z"
-  source: string; // e.g. "NASA EONET v3 / Suomi NPP VIIRS"
-  confidence?: string; // "High (Confirmed)", "Satellite Tracked"
-  metricLabel: string; // "Localized Temp / Wind", "Sustained Winds", "Fire Radiative Power"
-  metricValue: string; // "28°C • 45 km/h", "230 km/h", etc.
+  detectedAt: string;
+  exactUtcTimestamp: string;
+  source: string;
+  confidence?: string;
+  metricLabel: string;
+  metricValue: string;
   severity: 'critical' | 'extreme' | 'moderate';
   details: string;
   url?: string;
-  isLiveFetched: boolean; // true if fetched from NASA live API runtime
-
-  // Scientific Attribution Chain requested:
-  attributionChain: {
+  isLiveFetched: boolean;
+  provenance?: DataProvenance;
+  attribution?: ScientificAttribution;
+  attributionChain?: {
     whyOccurred: string;
     whatItCauses: string;
     whatItAffects: string;
     evidenceSensors: string;
     confidenceLevel: string;
   };
+  // Cluster reference if part of one
+  clusterId?: string;
+  detectionCount?: number;
 }
 
 export interface HistoricalObservation {
