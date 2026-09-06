@@ -7,8 +7,6 @@ import {
   ShieldCheck, 
   FileText, 
   Thermometer, 
-  Clock,
-  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import { 
@@ -27,24 +25,24 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
   const [activeArticleId, setActiveArticleId] = useState<string>(CLIMATE_ARTICLES[0].id);
 
   React.useEffect(() => {
-    document.title = 'Climate Science Encyclopedia | EARTH // LIVE';
+    document.title = 'Climate Science Reference | EARTH // LIVE';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute('content', 'Peer-reviewed climate science compendium: greenhouse effect physics, Keeling curve, ocean heat uptake, cryosphere dynamics, tipping points, and extreme weather attribution.');
+      metaDesc.setAttribute('content', 'Peer-reviewed climate science reference: greenhouse physics, Keeling curve, ocean heat, cryosphere, tipping points, and extreme weather attribution.');
     }
   }, []);
 
   const categories: { id: TopicCategory; label: string }[] = [
     { id: 'ALL', label: 'All Topics' },
-    { id: 'PHYSICAL_BASIS', label: 'Physical Science Basis' },
-    { id: 'GREENHOUSE_GASES', label: 'Greenhouse Gases & Carbon' },
-    { id: 'CRYOSPHERE_OCEANS', label: 'Oceans & Ice Sheets' },
-    { id: 'TIPPING_POINTS', label: 'Planetary Tipping Points' },
+    { id: 'PHYSICAL_BASIS', label: 'Physical Science' },
+    { id: 'GREENHOUSE_GASES', label: 'Carbon & Gases' },
+    { id: 'CRYOSPHERE_OCEANS', label: 'Oceans & Ice' },
+    { id: 'TIPPING_POINTS', label: 'Tipping Points' },
     { id: 'EXTREME_WEATHER', label: 'Attribution & Extremes' },
-    { id: 'EMISSIONS_INVENTORY', label: 'Emissions & Sectors' },
-    { id: 'IPCC_SCENARIOS', label: 'IPCC Scenarios & Budgets' },
-    { id: 'MITIGATION_SOLUTIONS', label: 'Solutions & Transition' },
-    { id: 'GLOSSARY', label: 'Scientific Glossary' }
+    { id: 'EMISSIONS_INVENTORY', label: 'Emissions' },
+    { id: 'IPCC_SCENARIOS', label: 'IPCC Scenarios' },
+    { id: 'MITIGATION_SOLUTIONS', label: 'Solutions' },
+    { id: 'GLOSSARY', label: 'Glossary' }
   ];
 
   // Filter articles based on category and search query
@@ -72,101 +70,91 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
   }, [activeArticleId, filteredArticles]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-slate-700 selection:text-white pb-24">
-      {/* Top Editorial Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+    <div className="min-h-screen bg-[#070b12] text-slate-200 font-sans selection:bg-slate-700 selection:text-white pb-24">
+      {/* Top Quiet Header */}
+      <header className="sticky top-0 z-40 bg-[#070b12]/95 backdrop-blur-md border-b border-slate-800/60 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToGlobe}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-200 hover:text-white transition cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white transition cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-slate-400" />
             <span>Return to Globe</span>
           </button>
           <div className="hidden sm:flex items-center gap-2 border-l border-slate-800 pl-3.5 text-xs text-slate-400">
             <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-semibold text-slate-300">
-              Climate Science Encyclopedia
+            <span className="font-medium text-slate-300">
+              Climate Science Reference
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 text-xs text-slate-400">
-          <span className="hidden md:inline">Peer-reviewed compendium</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-slate-800/90 border border-slate-700 text-[11px] font-medium text-slate-300">
-            Verified Reference
-          </span>
+        <div className="text-xs text-slate-400">
+          Peer-reviewed scientific compendium
         </div>
       </header>
 
-      {/* Hero Header & Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10 pb-6">
-        <div className="bg-slate-900/60 border border-slate-800/90 rounded-3xl p-6 sm:p-10 relative overflow-hidden backdrop-blur-sm">
-          <div className="max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-300 text-xs font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-slate-400" />
-              <span>Scientific Documentation & Physical Fundamentals</span>
-            </div>
-            
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-50 tracking-tight leading-tight">
-              Earth System Science & Climate Compendium
-            </h1>
-            
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-              Explanations of planetary climate mechanics: atmospheric radiation transfer, greenhouse gas chemistry,
-              ice sheet mass balance, oceanic heat uptake, tipping point dynamics, and scientific event attribution.
-            </p>
-
-            {/* Editorial Search Bar */}
-            <div className="pt-2 relative max-w-xl">
-              <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search articles, equations, terms, or datasets..."
-                className="w-full bg-slate-950/80 border border-slate-700/80 focus:border-slate-500 rounded-xl pl-11 pr-16 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition shadow-sm"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
+      {/* Editorial Title & Search Area (Clean, calm, no giant bloated box) */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-6 space-y-6">
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-slate-100 tracking-tight">
+            Climate Science Reference
+          </h1>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Explanations of planetary climate mechanics, greenhouse physics, ice sheet dynamics, and event attribution from peer-reviewed literature and IPCC assessments.
+          </p>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-4 border-b border-slate-800/80 text-xs">
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-medium ${
-                selectedCategory === cat.id
-                  ? 'bg-slate-800 text-slate-100 border border-slate-700 font-semibold shadow-sm'
-                  : 'bg-slate-900/40 text-slate-400 border border-slate-800/80 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* Search Bar & Category Filters in one calm group */}
+        <div className="space-y-3">
+          <div className="relative max-w-md">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search topics, equations, or datasets..."
+              className="w-full bg-slate-900/90 border border-slate-800 focus:border-slate-600 rounded-lg pl-10 pr-14 py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none transition shadow-sm"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-white cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 text-xs">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1 rounded-md whitespace-nowrap transition cursor-pointer text-xs ${
+                  selectedCategory === cat.id
+                    ? 'bg-slate-800 text-slate-100 font-medium'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Main Two-Column Layout (Sidebar Navigation + Active Article) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Sidebar: Article Index & Observational Summary */}
-        <aside className="lg:col-span-4 space-y-6">
-          {/* Article Selector List */}
-          <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-1">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 pt-2">
+        {/* Left Sidebar: Article Index */}
+        <aside className="lg:col-span-4 space-y-5">
+          {/* Article List */}
+          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5">
+            <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2.5 px-2">
               Articles ({filteredArticles.length})
-            </h3>
-            <div className="space-y-1">
+            </div>
+            <div className="space-y-0.5">
               {filteredArticles.map((article) => {
                 const isActive = article.id === activeArticle.id;
                 return (
@@ -174,23 +162,23 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
                     key={article.id}
                     onClick={() => {
                       setActiveArticleId(article.id);
-                      window.scrollTo({ top: 350, behavior: 'smooth' });
+                      window.scrollTo({ top: 120, behavior: 'smooth' });
                     }}
-                    className={`w-full text-left p-3 rounded-xl transition flex items-start justify-between gap-2 border cursor-pointer ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg transition flex items-start justify-between gap-2 cursor-pointer ${
                       isActive
-                        ? 'bg-slate-800/90 border-slate-700 text-white shadow-sm font-medium'
-                        : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                        ? 'bg-slate-800/80 text-white font-medium'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-semibold block leading-snug text-slate-200">
+                      <span className="text-xs font-medium block leading-snug">
                         {article.title}
                       </span>
-                      <span className="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[240px]">
+                      <span className="text-[11px] text-slate-500 block mt-0.5 truncate max-w-[220px]">
                         {article.subtitle}
                       </span>
                     </div>
-                    <ChevronRight className={`w-4 h-4 shrink-0 mt-0.5 ${isActive ? 'text-slate-200' : 'text-slate-600'}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isActive ? 'text-slate-300' : 'text-slate-600'}`} />
                   </button>
                 );
               })}
@@ -198,108 +186,105 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
           </div>
 
           {/* Calm Observational Vital Signs Infobox */}
-          <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 sm:p-5 text-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-              <Thermometer className="w-4 h-4 text-orange-400" />
-              <span className="font-semibold text-slate-200 uppercase tracking-wider text-xs">
+          <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 text-xs space-y-3">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-slate-800">
+              <Thermometer className="w-3.5 h-3.5 text-slate-400" />
+              <span className="font-medium text-slate-300 text-xs">
                 Key Climate Indicators
               </span>
             </div>
 
-            <div className="space-y-2.5">
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Observed Surface Anomaly</span>
-                <span className="text-lg font-bold text-orange-400 block mt-0.5">+1.33°C</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">NASA GISTEMP v4 (vs 1850–1900 baseline)</span>
+            <div className="space-y-2">
+              <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                <div className="text-[11px] text-slate-400">Observed Surface Anomaly</div>
+                <div className="text-base font-semibold text-slate-100 mt-0.5">+1.33°C</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">NASA GISTEMP v4 (vs 1850–1900)</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Atmospheric CO₂</span>
-                <span className="text-lg font-bold text-sky-400 block mt-0.5">429.1 ppm</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">NOAA Mauna Loa in-situ spectrometer</span>
+              <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                <div className="text-[11px] text-slate-400">Atmospheric CO₂</div>
+                <div className="text-base font-semibold text-slate-100 mt-0.5">429.1 ppm</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">NOAA Mauna Loa in-situ</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Ocean Heat Content (0–2000m)</span>
-                <span className="text-lg font-bold text-blue-400 block mt-0.5">+382.4 ZJ</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">NOAA NCEI Ocean Climate Lab (Argo floats)</span>
+              <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                <div className="text-[11px] text-slate-400">Ocean Heat Content (0–2000m)</div>
+                <div className="text-base font-semibold text-slate-100 mt-0.5">+382.4 ZJ</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">NOAA NCEI (Argo float array)</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Arctic Sea Ice Minimum</span>
-                <span className="text-lg font-bold text-cyan-300 block mt-0.5">4.15 M km²</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">NSIDC Sea Ice Index (September minimum)</span>
+              <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                <div className="text-[11px] text-slate-400">Arctic Sea Ice Minimum</div>
+                <div className="text-base font-semibold text-slate-100 mt-0.5">4.15 M km²</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">NSIDC Sea Ice Index (Sept)</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block uppercase font-medium">Sea Level Rise Rate</span>
-                <span className="text-lg font-bold text-indigo-300 block mt-0.5">+4.5 mm / yr</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">NASA / CNES Satellite Radar Altimetry</span>
+              <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                <div className="text-[11px] text-slate-400">Sea Level Rise Rate</div>
+                <div className="text-base font-semibold text-slate-100 mt-0.5">+4.5 mm / yr</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">NASA / CNES Satellite Altimetry</div>
               </div>
             </div>
 
-            <div className="pt-2 text-[11px] text-slate-400 text-center border-t border-slate-800/80">
-              Verified with NASA GISS, NOAA GML/NCEI, and NSIDC.
+            <div className="pt-1 text-[10px] text-slate-500 text-center">
+              Sources: NASA GISS, NOAA GML/NCEI, NSIDC.
             </div>
           </div>
         </aside>
 
-        {/* Right Main Column: Full Encyclopedic Article Content */}
-        <main className="lg:col-span-8 space-y-8">
-          <article className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-10 space-y-8 backdrop-blur-sm">
+        {/* Right Main Column: Full Article Content */}
+        <main className="lg:col-span-8 space-y-6">
+          <article className="bg-slate-900/30 border border-slate-800/70 rounded-2xl p-6 sm:p-8 space-y-6">
             {/* Article Header */}
-            <div className="border-b border-slate-800/80 pb-6 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-medium border border-slate-700">
-                  {activeArticle.category.replace('_', ' ')}
-                </span>
-                <span className="text-xs text-slate-500 font-mono">ID: {activeArticle.id}</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight">
+            <div className="border-b border-slate-800/80 pb-5 space-y-1.5">
+              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+                {activeArticle.category.replace('_', ' ')}
+              </span>
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight">
                 {activeArticle.title}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400 leading-normal">
                 {activeArticle.subtitle}
               </p>
             </div>
 
             {/* Lead Paragraph */}
-            <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 text-slate-200 text-sm sm:text-base leading-relaxed">
+            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-300 text-xs sm:text-sm leading-relaxed">
               {activeArticle.leadParagraph}
             </div>
 
             {/* Key Fact Boxes */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {activeArticle.keyFacts.map((fact, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                  <span className="text-[10px] text-slate-400 uppercase font-medium block">{fact.label}</span>
-                  <span className="text-sm font-semibold text-slate-100 block mt-1">{fact.value}</span>
-                  <span className="text-[10px] text-slate-400 block mt-1 truncate">{fact.source}</span>
+                <div key={idx} className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/70">
+                  <span className="text-[10px] text-slate-400 uppercase block">{fact.label}</span>
+                  <span className="text-sm font-medium text-slate-200 block mt-0.5">{fact.value}</span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5 truncate">{fact.source}</span>
                 </div>
               ))}
             </div>
 
             {/* Detailed Article Sections */}
-            <div className="space-y-8 text-slate-300 leading-relaxed text-sm">
+            <div className="space-y-6 text-slate-300 leading-relaxed text-xs sm:text-sm">
               {activeArticle.sections.map((section, idx) => (
-                <section key={idx} className="space-y-3.5">
-                  <h3 className="text-base sm:text-lg font-semibold text-slate-100 tracking-tight border-b border-slate-800/80 pb-2">
+                <section key={idx} className="space-y-3">
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-200 tracking-tight border-b border-slate-800/60 pb-1.5">
                     {section.heading}
                   </h3>
 
                   {section.content.map((p, pIdx) => (
-                    <p key={pIdx} className="leading-relaxed text-slate-300 text-sm">
+                    <p key={pIdx} className="leading-relaxed text-slate-300">
                       {p}
                     </p>
                   ))}
 
                   {/* Scientific Formula Box */}
                   {section.formula && (
-                    <div className="my-4 p-4 rounded-xl bg-slate-950 border border-slate-800 text-center font-mono">
-                      <span className="text-[10px] text-slate-400 block mb-1 uppercase tracking-wider font-sans">
+                    <div className="my-3 p-3.5 rounded-lg bg-slate-950/80 border border-slate-800 text-center font-mono">
+                      <span className="text-[10px] text-slate-500 block mb-1 uppercase tracking-wider font-sans">
                         Governing Equation
                       </span>
-                      <span className="text-sm sm:text-base font-semibold text-slate-200">
+                      <span className="text-xs sm:text-sm text-slate-200">
                         {section.formula}
                       </span>
                     </div>
@@ -307,12 +292,12 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
 
                   {/* Data Table */}
                   {section.table && (
-                    <div className="my-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/80">
+                    <div className="my-3 overflow-x-auto rounded-lg border border-slate-800/80 bg-slate-950/70">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-slate-900 text-slate-300 border-b border-slate-800">
                           <tr>
                             {section.table.headers.map((h, hIdx) => (
-                              <th key={hIdx} className="p-3 font-semibold text-slate-200">
+                              <th key={hIdx} className="p-2.5 font-medium text-slate-300">
                                 {h}
                               </th>
                             ))}
@@ -320,9 +305,9 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
                         </thead>
                         <tbody className="divide-y divide-slate-800/60">
                           {section.table.rows.map((row, rIdx) => (
-                            <tr key={rIdx} className="hover:bg-slate-900/40 transition">
+                            <tr key={rIdx} className="hover:bg-slate-900/30 transition">
                               {row.map((cell, cIdx) => (
-                                <td key={cIdx} className="p-3 text-slate-300">
+                                <td key={cIdx} className="p-2.5 text-slate-300">
                                   {cell}
                                 </td>
                               ))}
@@ -335,13 +320,13 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
 
                   {/* Alert Callout */}
                   {section.callout && (
-                    <div className="my-4 p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-3">
-                      <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="my-3 p-3.5 rounded-lg bg-slate-950/70 border border-slate-800 flex items-start gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold text-xs text-slate-200 block">
+                        <span className="font-medium text-xs text-slate-200 block">
                           {section.callout.title}
                         </span>
-                        <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
                           {section.callout.text}
                         </p>
                       </div>
@@ -352,15 +337,15 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
             </div>
 
             {/* Academic Citations & References Section */}
-            <div className="pt-8 border-t border-slate-800/80 space-y-3">
-              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <div className="pt-6 border-t border-slate-800/80 space-y-2.5">
+              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-slate-400" />
-                Primary Academic Citations & References
+                Primary Citations & References
               </h4>
-              <ul className="space-y-2 text-xs text-slate-300">
+              <ul className="space-y-1.5 text-xs text-slate-400">
                 {activeArticle.references.map((ref, idx) => (
-                  <li key={idx} className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80 flex items-start gap-2 leading-relaxed">
-                    <span className="text-slate-400 font-mono font-semibold shrink-0">[{idx + 1}]</span>
+                  <li key={idx} className="p-2 rounded-md bg-slate-950/50 border border-slate-800/60 flex items-start gap-2 leading-relaxed">
+                    <span className="text-slate-500 font-mono text-[11px] shrink-0">[{idx + 1}]</span>
                     <span>{ref}</span>
                   </li>
                 ))}
