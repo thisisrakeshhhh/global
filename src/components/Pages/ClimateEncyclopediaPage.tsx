@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -20,6 +20,7 @@ interface ClimateEncyclopediaPageProps {
 }
 
 export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = ({ onBackToGlobe }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TopicCategory>('ALL');
   const [activeArticleId, setActiveArticleId] = useState<string>(CLIMATE_ARTICLES[0].id);
@@ -70,7 +71,7 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
   }, [activeArticleId, filteredArticles]);
 
   return (
-    <div className="w-full min-h-screen overflow-y-auto bg-[#070b12] text-slate-200 font-sans selection:bg-slate-700 selection:text-white pb-24">
+    <div ref={containerRef} className="fixed inset-0 overflow-y-auto bg-[#070b12] text-slate-200 font-sans selection:bg-slate-700 selection:text-white pb-24">
       {/* Top Quiet Header */}
       <header className="sticky top-0 z-40 bg-[#070b12]/95 backdrop-blur-md border-b border-slate-800/60 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -162,7 +163,8 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
                     key={article.id}
                     onClick={() => {
                       setActiveArticleId(article.id);
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
+                      containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className={`w-full text-left px-3 py-2.5 rounded-lg transition flex items-start justify-between gap-2 cursor-pointer ${
                       isActive

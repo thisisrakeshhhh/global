@@ -21,7 +21,7 @@ export const LegalPages: React.FC<LegalPagesProps> = ({ onBackToGlobe, initialTa
   }, [activeTab]);
 
   return (
-    <div className="w-full min-h-screen overflow-y-auto bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500 selection:text-white pb-16">
+    <div className="fixed inset-0 overflow-y-auto bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500 selection:text-white pb-16">
       {/* Header Bar */}
       <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
         <button
