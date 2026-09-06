@@ -3,7 +3,7 @@ import { getFireTelemetry, getClusterDetail } from '../../server/telemetryEngine
 export default async function handler(req, res) {
   const clusterId = req.query?.id;
   if (clusterId) {
-    const detail = getClusterDetail(clusterId);
+    const detail = await getClusterDetail(clusterId);
     if (!detail) {
       return res.status(404).json({ error: 'Cluster not found' });
     }

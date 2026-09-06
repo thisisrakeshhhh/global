@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const detail = getClusterDetail(clusterId);
+    const detail = await getClusterDetail(clusterId);
     if (!detail) {
       return res.status(404).json({ error: 'Cluster not found' });
     }

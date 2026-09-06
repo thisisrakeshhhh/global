@@ -32,7 +32,7 @@ function telemetryDevPlugin(): Plugin {
 
           if (pathname.startsWith('/api/telemetry/fires/')) {
             const clusterId = pathname.replace('/api/telemetry/fires/', '');
-            const data = getClusterDetail(clusterId);
+            const data = await getClusterDetail(clusterId);
             if (!data) {
               res.statusCode = 404;
               return res.end(JSON.stringify({ error: 'Cluster not found' }));

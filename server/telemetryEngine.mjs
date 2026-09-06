@@ -293,7 +293,10 @@ export async function getFireTelemetry(sensorFilter = 'ALL') {
 /**
  * On-demand cluster detail lookup
  */
-export function getClusterDetail(clusterId) {
+export async function getClusterDetail(clusterId) {
+  if (state.fireClusters.length === 0) {
+    await getFireTelemetry('ALL');
+  }
   const cluster = state.fireClusters.find(c => c.id === clusterId);
   if (!cluster) return null;
   const points = state.allFirePoints.get(clusterId) || [];

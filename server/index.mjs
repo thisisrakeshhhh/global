@@ -75,7 +75,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname.startsWith('/api/telemetry/fires/')) {
     const clusterId = pathname.replace('/api/telemetry/fires/', '');
     try {
-      const cluster = getClusterDetail(clusterId);
+      const cluster = await getClusterDetail(clusterId);
       if (!cluster) {
         return sendJson(res, 404, { error: 'Cluster not found', clusterId });
       }
