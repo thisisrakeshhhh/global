@@ -5,6 +5,7 @@ import { TodayStoriesBar } from './components/UI/TodayStoriesBar';
 import { VitalsDrawer } from './components/UI/VitalsDrawer';
 import { EventStoryModal } from './components/Story/EventStoryModal';
 import { ClimateHistoryPanel } from './components/UI/ClimateHistoryPanel';
+import { HistoryPage } from './components/History/HistoryPage';
 import { CountrySelectorBar } from './components/UI/CountrySelectorBar';
 import { ScientificDossier } from './components/UI/ScientificDossier';
 import { MethodologyPage } from './components/Pages/MethodologyPage';
@@ -286,8 +287,18 @@ export function App() {
           </div>
         )}
 
+        {/* Mode 2: Full History Experience */}
+        {presentationMode === 'history' && (
+          <div className="flex-1 overflow-y-auto pointer-events-auto custom-scrollbar">
+            <HistoryPage
+              selectedYear={selectedYear}
+              onYearChange={(yr) => setSelectedYear(yr)}
+            />
+          </div>
+        )}
+
         {/* Center Spacing for other modes */}
-        {presentationMode !== 'explore' && <div className="flex-1" />}
+        {presentationMode !== 'explore' && presentationMode !== 'history' && <div className="flex-1" />}
 
         {/* Bottom Section: Mode-Specific Deck */}
         <div className="w-full pointer-events-auto px-3 sm:px-6 pb-4">
@@ -300,16 +311,6 @@ export function App() {
                 onSelectStory={handleOpenEventStory}
                 onExploreAll={() => handleSelectPresentationMode('events')}
                 onOpenVitals={() => setIsVitalsOpen(true)}
-              />
-            </div>
-          )}
-
-          {/* Mode 2: History -> Climate History Scrubber */}
-          {presentationMode === 'history' && (
-            <div className="animate-fadeIn">
-              <ClimateHistoryPanel
-                selectedYear={selectedYear}
-                onYearChange={(yr) => setSelectedYear(yr)}
               />
             </div>
           )}
