@@ -28,13 +28,14 @@ export async function fetchNASAFirmsActiveFires(maxPoints: number = 60): Promise
   }
 
   try {
-    // NASA FIRMS open 24h global active fire feed
-    const response = await fetch(
-      'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv',
-      {
-        headers: { Range: 'bytes=0-150000' } // Grab top active fires to prevent downloading tens of thousands
-      }
-    );
+    // In dev environment with Vite proxy, use /api/firms; otherwise use direct URL
+    const firmsUrl = import.meta.env.DEV
+      ? '/api/firms/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
+      : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv';
+
+    const response = await fetch(firmsUrl, {
+      headers: { Range: 'bytes=0-150000' } // Grab top active fires to prevent downloading tens of thousands
+    });
 
     if (!response.ok) {
       throw new Error(`NASA FIRMS HTTP status ${response.status}`);

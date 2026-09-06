@@ -10,6 +10,13 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    host: true
+    host: true,
+    proxy: {
+      '/api/firms': {
+        target: 'https://firms.modaps.eosdis.nasa.gov',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/firms/, '')
+      }
+    }
   }
 });
