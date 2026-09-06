@@ -58,7 +58,7 @@ export async function getFireClusters(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     provenance: {
       source: 'NASA FIRMS',
       dataset: 'VIIRS & MODIS NRT',
-      observationTime: nowIso,
+      observationTime: 'Unavailable',
       ingestionTime: nowIso,
       processingVersion: 'v1.0-grid1.5',
       sourceUrl: 'https://firms.modaps.eosdis.nasa.gov/'
@@ -67,11 +67,11 @@ export async function getFireClusters(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
       sourceId: 'firms',
       sourceName: 'NASA FIRMS Near-Real-Time',
       category: 'NEAR-REAL-TIME SATELLITE',
-      state: 'DELAYED',
-      latestObservationUtc: 'N/A',
+      state: 'NO_DATA',
+      latestObservationUtc: 'Unavailable',
       lastIngestedUtc: nowIso,
       latencyMinutes: 0,
-      statusMessage: 'Connecting to telemetry server...'
+      statusMessage: 'Unable to reach NASA FIRMS telemetry service'
     }
   };
 }
@@ -104,7 +104,14 @@ export async function getActiveCyclones(): Promise<{
   }
 
   if (cachedCyclonesData) {
-    return cachedCyclonesData;
+    return {
+      ...cachedCyclonesData,
+      freshness: {
+        ...cachedCyclonesData.freshness,
+        state: 'DELAYED',
+        statusMessage: 'Upstream connection delayed, serving cached telemetry'
+      }
+    };
   }
 
   const nowIso = new Date().toISOString();
@@ -114,11 +121,11 @@ export async function getActiveCyclones(): Promise<{
       sourceId: 'nhc',
       sourceName: 'NOAA National Hurricane Center',
       category: 'NEAR-REAL-TIME SATELLITE',
-      state: 'LIVE',
-      latestObservationUtc: nowIso,
+      state: 'NO_DATA',
+      latestObservationUtc: 'Unavailable',
       lastIngestedUtc: nowIso,
       latencyMinutes: 0,
-      statusMessage: 'Atlantic & Pacific basins currently quiet (No active cyclones)'
+      statusMessage: 'Unable to reach NOAA NHC telemetry service'
     }
   };
 }
@@ -136,7 +143,11 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
   }
 
   if (cachedFreshness.length > 0) {
-    return cachedFreshness;
+    return cachedFreshness.map(report => ({
+      ...report,
+      state: (report.state === 'LIVE' || report.state === 'NEAR-REAL-TIME') ? 'DELAYED' : report.state,
+      statusMessage: `${report.statusMessage} (Connection delayed, serving cached status)`
+    }));
   }
 
   const nowIso = new Date().toISOString();
@@ -145,21 +156,21 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
       sourceId: 'firms',
       sourceName: 'NASA FIRMS Near-Real-Time',
       category: 'NEAR-REAL-TIME SATELLITE',
-      state: 'NEAR-REAL-TIME',
-      latestObservationUtc: nowIso,
+      state: 'NO_DATA',
+      latestObservationUtc: 'Unavailable',
       lastIngestedUtc: nowIso,
-      latencyMinutes: 60,
-      statusMessage: 'Multi-sensor thermal anomaly detection'
+      latencyMinutes: 0,
+      statusMessage: 'Telemetry offline — unable to verify NASA FIRMS status'
     },
     {
       sourceId: 'nhc',
       sourceName: 'NOAA National Hurricane Center',
       category: 'NEAR-REAL-TIME SATELLITE',
-      state: 'LIVE',
-      latestObservationUtc: nowIso,
+      state: 'NO_DATA',
+      latestObservationUtc: 'Unavailable',
       lastIngestedUtc: nowIso,
-      latencyMinutes: 15,
-      statusMessage: 'Official cyclone advisories'
+      latencyMinutes: 0,
+      statusMessage: 'Telemetry offline — unable to verify NOAA NHC status'
     },
     {
       sourceId: 'mlo',
@@ -169,7 +180,7 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
       latestObservationUtc: '2026-09-01T00:00:00Z',
       lastIngestedUtc: nowIso,
       latencyMinutes: 1440,
-      statusMessage: 'Monthly mean in-situ atmospheric CO₂ monitoring'
+      statusMessage: 'Monthly mean in-situ atmospheric CO₂ monitoring (Keeling Curve)'
     },
     {
       sourceId: 'era5',
@@ -179,7 +190,7 @@ export async function getTelemetryFreshness(): Promise<SourceFreshnessReport[]> 
       latestObservationUtc: '2026-08-31T23:00:00Z',
       lastIngestedUtc: nowIso,
       latencyMinutes: 7200,
-      statusMessage: 'Global atmospheric reanalysis 5th generation'
+      statusMessage: 'Global atmospheric reanalysis 5th generation (ERA5)'
     }
   ];
 }

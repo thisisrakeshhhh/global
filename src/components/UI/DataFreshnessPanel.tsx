@@ -15,9 +15,12 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const isDegraded = reports.some(r => r.state === 'DELAYED' || r.state === 'NO_DATA');
+
   const getBadgeStyle = (category: string, state: string) => {
-    if (state === 'DELAYED') return 'bg-rose-500/20 text-rose-400 border-rose-500/40';
-    if (state === 'NEAR-REAL-TIME' || state === 'LIVE') return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
+    if (state === 'DELAYED' || state === 'NO_DATA') return 'bg-rose-500/20 text-rose-400 border-rose-500/40';
+    if (state === 'LIVE') return 'bg-red-500/20 text-red-400 border-red-500/40';
+    if (state === 'NEAR-REAL-TIME') return 'bg-amber-500/20 text-amber-400 border-amber-500/40';
     if (state === 'UPDATED') return 'bg-sky-500/20 text-sky-400 border-sky-500/40';
     return 'bg-purple-500/20 text-purple-400 border-purple-500/40';
   };
@@ -30,12 +33,14 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
         className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 backdrop-blur-md shadow-xl text-xs font-mono transition-all text-slate-200"
       >
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isDegraded ? 'bg-amber-400' : 'bg-emerald-400'} opacity-75`}></span>
+          <span className={`relative inline-flex rounded-full h-2 w-2 ${isDegraded ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
         </span>
         <span className="font-semibold tracking-wider text-slate-300">DATA FRESHNESS</span>
         <span className="text-slate-500">•</span>
-        <span className="text-emerald-400 font-medium">SATELLITE SYNC</span>
+        <span className={`font-medium ${isDegraded ? 'text-amber-400' : 'text-emerald-400'}`}>
+          {isDegraded ? 'CACHE DEGRADED' : 'SATELLITE SYNC'}
+        </span>
         {isOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
       </button>
 

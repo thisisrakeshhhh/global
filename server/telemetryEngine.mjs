@@ -108,14 +108,14 @@ export async function getFireTelemetry(sensorFilter = 'ALL') {
   const parsedPoints = [];
   let latestObsUtc = '';
 
-  for (const feed of feeds) {
+  const feedPromises = feeds.map(async (feed) => {
     try {
-      const resp = await fetch(feed.url);
-      if (!resp.ok) continue;
+      const resp = await fetch(feed.url, { signal: AbortSignal.timeout(12000) });
+      if (!resp.ok) return [];
 
       const text = await resp.text();
       const lines = text.trim().split('\n');
-      if (lines.length < 2) continue;
+      if (lines.length < 2) return [];
 
       const header = lines[0].split(',').map(h => h.trim().toLowerCase());
       const latIdx = header.indexOf('latitude');
@@ -127,6 +127,7 @@ export async function getFireTelemetry(sensorFilter = 'ALL') {
       const frpIdx = header.indexOf('frp');
       const daynightIdx = header.indexOf('daynight');
 
+      const pts = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(',');
         if (cols.length <= Math.max(latIdx, lngIdx, frpIdx)) continue;
@@ -150,13 +151,8 @@ export async function getFireTelemetry(sensorFilter = 'ALL') {
         if (confObj.level === 'low') continue;
 
         const timePadded = acqTime.padStart(4, '0');
-        const pointIso = `${acqDate}T${timePadded.slice(0, 2)}:${timePadded.slice(2)}:00Z`;
-        if (!latestObsUtc || pointIso > latestObsUtc) {
-          latestObsUtc = pointIso;
-        }
-
-        parsedPoints.push({
-          id: `firms_${feed.sensor}_${acqDate}_${timePadded}_${parsedPoints.length}`,
+        pts.push({
+          id: `firms_${feed.sensor}_${acqDate}_${timePadded}_${pts.length}`,
           lat,
           lng,
           brightness,
@@ -168,8 +164,21 @@ export async function getFireTelemetry(sensorFilter = 'ALL') {
           daynight
         });
       }
+      return pts;
     } catch (err) {
       console.warn(`[Server Ingestion] Feed ${feed.name} warning:`, err.message);
+      return [];
+    }
+  });
+
+  const feedResults = await Promise.all(feedPromises);
+  for (const pts of feedResults) {
+    for (const pt of pts) {
+      const pointIso = `${pt.acqDate}T${pt.acqTime.slice(0, 2)}:${pt.acqTime.slice(2)}:00Z`;
+      if (!latestObsUtc || pointIso > latestObsUtc) {
+        latestObsUtc = pointIso;
+      }
+      parsedPoints.push(pt);
     }
   }
 
@@ -310,6 +319,7 @@ export async function getCycloneTelemetry() {
 
   const cyclones = [];
   let latestAdvisoryUtc = '';
+  let reachedAnyNhcFeed = false;
 
   try {
     const nhcFeeds = [
@@ -319,8 +329,9 @@ export async function getCycloneTelemetry() {
 
     for (const feed of nhcFeeds) {
       try {
-        const resp = await fetch(feed.url);
+        const resp = await fetch(feed.url, { signal: AbortSignal.timeout(8000) });
         if (!resp.ok) continue;
+        reachedAnyNhcFeed = true;
         const xml = await resp.text();
 
         const itemMatches = xml.match(/<item>([\s\S]*?)<\/item>/g);
@@ -427,13 +438,17 @@ export async function getCycloneTelemetry() {
     sourceId: 'nhc',
     sourceName: 'NOAA National Hurricane Center',
     category: 'NEAR-REAL-TIME SATELLITE',
-    state: cyclones.length > 0 ? 'NEAR-REAL-TIME' : 'LIVE',
-    latestObservationUtc: latestAdvisoryUtc || ingestIso,
+    state: reachedAnyNhcFeed 
+      ? 'NEAR-REAL-TIME' 
+      : (state.cyclones.length > 0 ? 'DELAYED' : 'NO_DATA'),
+    latestObservationUtc: latestAdvisoryUtc || (reachedAnyNhcFeed ? ingestIso : (state.cyclones[0]?.advisoryTimeUtc || 'Unavailable')),
     lastIngestedUtc: ingestIso,
-    latencyMinutes: 10,
-    statusMessage: cyclones.length > 0 
-      ? `Tracking ${cyclones.length} active named systems`
-      : 'Atlantic & Pacific basins currently quiet (No active cyclones)'
+    latencyMinutes: reachedAnyNhcFeed ? 15 : 0,
+    statusMessage: reachedAnyNhcFeed
+      ? (cyclones.length > 0 
+          ? `Tracking ${cyclones.length} active named systems`
+          : 'Atlantic & Pacific basins currently quiet (No active cyclones)')
+      : (state.cyclones.length > 0 ? 'Upstream delayed, serving cached NOAA advisory' : 'Unable to reach NOAA NHC feeds')
   };
 
   state.freshness['nhc'] = nhcFreshness;
@@ -487,11 +502,11 @@ export function getFreshnessTelemetry() {
       sourceId: 'nhc',
       sourceName: 'NOAA National Hurricane Center',
       category: 'NEAR-REAL-TIME SATELLITE',
-      state: 'LIVE',
+      state: 'NEAR-REAL-TIME',
       latestObservationUtc: nowIso,
       lastIngestedUtc: nowIso,
       latencyMinutes: 15,
-      statusMessage: 'Official cyclone advisories'
+      statusMessage: 'Official cyclone advisories (3-6h cadence)'
     },
     mloFreshness,
     era5Freshness

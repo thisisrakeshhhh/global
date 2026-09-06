@@ -14,6 +14,7 @@ import { ScientificAttributionCard } from './components/UI/ScientificAttribution
 import { MethodologyPage } from './components/Pages/MethodologyPage';
 import { DataSourcesPage } from './components/Pages/DataSourcesPage';
 import { LegalPages } from './components/Pages/LegalPages';
+import { ClimateEncyclopediaPage } from './components/Pages/ClimateEncyclopediaPage';
 import { InteractiveEntity } from './components/Globe/HotspotsPillars';
 import { 
   TimeDomain, 
@@ -34,7 +35,7 @@ import {
 } from './services/apiClient';
 import { TippingPoint } from './data/tippingPoints';
 
-type PageRoute = 'globe' | 'methodology' | 'datasources' | 'about' | 'privacy' | 'terms' | 'contact';
+type PageRoute = 'globe' | 'methodology' | 'datasources' | 'about' | 'privacy' | 'terms' | 'contact' | 'wiki';
 
 export function App() {
   // Navigation & Active View
@@ -138,6 +139,9 @@ export function App() {
   const totalFires = fireClusters.reduce((acc, c) => acc + c.detectionCount, 0);
 
   // Substantive Pages Navigation Render
+  if (activeRoute === 'wiki') {
+    return <ClimateEncyclopediaPage onBackToGlobe={() => setActiveRoute('globe')} />;
+  }
   if (activeRoute === 'methodology') {
     return <MethodologyPage onBackToGlobe={() => setActiveRoute('globe')} />;
   }
@@ -220,6 +224,7 @@ export function App() {
         }}
         onRefreshTelemetry={loadTelemetry}
         isLoadingLive={isLoadingLive}
+        onOpenWiki={() => setActiveRoute('wiki')}
         onOpenMethodology={() => setActiveRoute('methodology')}
         onOpenDataSources={() => setActiveRoute('datasources')}
         onOpenAbout={() => setActiveRoute('about')}

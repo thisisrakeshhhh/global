@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, RotateCw, Sparkles, Search, Flame, Wind, Radio, RefreshCw } from 'lucide-react';
+import { Volume2, VolumeX, RotateCw, Sparkles, Search, Flame, Wind, Radio, RefreshCw, BookOpen } from 'lucide-react';
 import { audioController } from '../../utils/audioController';
 import { SCIENTIFIC_COUNTRY_INTELLIGENCE } from '../../services/countryIntelligenceService';
 import { TIPPING_POINTS } from '../../data/tippingPoints';
@@ -18,6 +18,7 @@ interface HeaderHUDProps {
   onOpenMethodology?: () => void;
   onOpenDataSources?: () => void;
   onOpenAbout?: () => void;
+  onOpenWiki?: () => void;
   activeSensorFilter?: 'ALL' | 'VIIRS' | 'MODIS';
   onSelectSensorFilter?: (filter: 'ALL' | 'VIIRS' | 'MODIS') => void;
   clusterCount?: number;
@@ -35,6 +36,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   onOpenMethodology,
   onOpenDataSources,
   onOpenAbout,
+  onOpenWiki,
   activeSensorFilter = 'ALL',
   onSelectSensorFilter,
   clusterCount = 0,
@@ -78,9 +80,9 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   ].filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // Status badge styling
-  let statusBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
-  let statusDotColor = 'bg-emerald-500';
-  let statusText = `🟢 LIVE SATELLITE (${syncStatus.lastSyncFormatted})`;
+  let statusBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+  let statusDotColor = 'bg-amber-400';
+  let statusText = `🟠 NEAR-REAL-TIME SATELLITE (${syncStatus.lastSyncFormatted})`;
 
   if (syncStatus.status === 'recent') {
     statusBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
@@ -90,7 +92,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   } else if (syncStatus.status === 'delayed' || syncStatus.status === 'offline') {
     statusBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
     statusDotColor = 'bg-rose-400';
-    statusText = '🔴 DELAYED CACHE — RECONNECTING';
+    statusText = '⚠️ DELAYED CACHE — RECONNECTING';
   }
 
   return (
@@ -138,6 +140,15 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
 
         {/* Navigation & Documentation Links */}
         <div className="hidden lg:flex items-center gap-2 text-xs">
+          {onOpenWiki && (
+            <button
+              onClick={onOpenWiki}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 border border-cyan-500/50 text-cyan-300 hover:text-white transition font-bold shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Climate Wiki</span>
+            </button>
+          )}
           {onOpenMethodology && (
             <button
               onClick={onOpenMethodology}
