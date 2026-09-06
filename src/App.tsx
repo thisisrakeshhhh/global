@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ClimateGlobe, ClimateGlobeHandle, ClimateLayer } from './components/Globe/ClimateGlobe';
-import { MainNavbar } from './components/UI/MainNavbar';
+import { MainNavbar, PresentationMode } from './components/UI/MainNavbar';
 import { MetricsBanner } from './components/UI/MetricsBanner';
 import { ClimateLayersPanel, LayerState } from './components/UI/ClimateLayersPanel';
 import { LatestEventsPanel, DisplayEvent } from './components/UI/LatestEventsPanel';
@@ -9,6 +9,8 @@ import { BottomBanners } from './components/UI/BottomBanners';
 import { ScientificDossier } from './components/UI/ScientificDossier';
 import { DataFreshnessPanel } from './components/UI/DataFreshnessPanel';
 import { ScientificAttributionCard } from './components/UI/ScientificAttributionCard';
+import { ClimateHistoryPanel } from './components/UI/ClimateHistoryPanel';
+import { CountrySelectorBar } from './components/UI/CountrySelectorBar';
 import { MethodologyPage } from './components/Pages/MethodologyPage';
 import { DataSourcesPage } from './components/Pages/DataSourcesPage';
 import { LegalPages } from './components/Pages/LegalPages';
@@ -49,6 +51,9 @@ function getInitialRoute(): PageRoute {
 export function App() {
   // Navigation & Active View with deep URL support
   const [activeRoute, setActiveRoute] = useState<PageRoute>(getInitialRoute);
+  
+  // 5 Core Product Modes: GLOBAL | HISTORY | COUNTRIES | LIVE EVENTS | EVIDENCE
+  const [presentationMode, setPresentationMode] = useState<PresentationMode>('global');
 
   const navigateTo = useCallback((route: PageRoute) => {
     setActiveRoute(route);
@@ -111,6 +116,7 @@ export function App() {
   // Selection & Inspector States
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; distance?: number } | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<InteractiveEntity | null>(null);
+  const [selectedCountryProfile, setSelectedCountryProfile] = useState<ScientificCountryProfile | null>(null);
   const [selectedAttributionItem, setSelectedAttributionItem] = useState<FireCluster | FireDetectionPoint | NOAACycloneEvent | LiveEvent | null>(null);
 
   // Fetch telemetry from centralized server API client
@@ -146,6 +152,33 @@ export function App() {
     return () => clearInterval(interval);
   }, [loadTelemetry]);
 
+  // Handle Mode Switching
+  const handleSelectPresentationMode = (mode: PresentationMode) => {
+    setPresentationMode(mode);
+    setAutoRotate(mode === 'global');
+
+    if (mode === 'history') {
+      setTimeDomain('observed');
+      setActiveLayer('temperature');
+      setLayerState(prev => ({ ...prev, temperature: true }));
+    } else if (mode === 'countries') {
+      setTimeDomain('live');
+      // If no country selected yet, select India or USA as default
+      if (!selectedCountryProfile) {
+        setSelectedCountryProfile(SCIENTIFIC_COUNTRY_INTELLIGENCE[0]);
+      }
+    } else if (mode === 'events') {
+      setTimeDomain('live');
+      setActiveLayer('forests');
+      setLayerState(prev => ({ ...prev, fires: true, cyclones: true }));
+    } else if (mode === 'evidence') {
+      // Keep on globe or route to wiki
+    } else {
+      // Global mode
+      setTimeDomain('live');
+    }
+  };
+
   // Expand a cluster on-demand
   const handleDrillDownCluster = async (clusterId: string) => {
     const clusterWithPoints = await getClusterPoints(clusterId);
@@ -161,6 +194,12 @@ export function App() {
     setFocusTarget({ lat, lng, distance });
   };
 
+  const handleSelectCountryFromBar = (country: ScientificCountryProfile) => {
+    setSelectedCountryProfile(country);
+    setAutoRotate(false);
+    setFocusTarget({ lat: country.lat, lng: country.lng, distance: 3.2 });
+  };
+
   const handleSelectDisplayEvent = (event: DisplayEvent) => {
     setAutoRotate(false);
     setFocusTarget({ lat: event.lat, lng: event.lng, distance: 3.2 });
@@ -174,7 +213,7 @@ export function App() {
     }
   };
 
-  let activeCountryProfile: ScientificCountryProfile | null = null;
+  let activeCountryProfile: ScientificCountryProfile | null = selectedCountryProfile;
   let activeTippingPoint: TippingPoint | null = null;
 
   if (selectedEntity) {
@@ -207,7 +246,7 @@ export function App() {
 
   return (
     <div className="relative w-screen h-screen bg-[#030712] overflow-hidden select-none font-sans text-slate-100">
-      {/* 3D WebGL Earth Visualizer (Full Background) */}
+      {/* 3D WebGL Earth Visualizer (Full Background Anchor) */}
       <div className="absolute inset-0 z-0">
         <ClimateGlobe
           ref={globeRef}
@@ -219,6 +258,11 @@ export function App() {
           onSelectEntity={(ent) => {
             setAutoRotate(false);
             setSelectedEntity(ent);
+            if (ent.type === 'country') {
+              const legacy = ent.data as { id: string };
+              const found = getCountryProfile(legacy.id);
+              if (found) setSelectedCountryProfile(found);
+            }
           }}
           onSelectCluster={(cluster) => {
             setAutoRotate(false);
@@ -254,13 +298,14 @@ export function App() {
         />
       </div>
 
-      {/* Foreground UI Layer with Dashboard Grid matching exact reference screenshot */}
+      {/* Foreground UI Layer with Presentation Mode Switcher */}
       <div className="relative z-10 w-full h-full flex flex-col justify-between pointer-events-none">
         {/* Top Bar Section */}
         <div className="w-full flex flex-col pointer-events-auto">
           <MainNavbar
-            activeRoute={activeRoute}
-            onNavigate={(route) => navigateTo(route)}
+            activeMode={presentationMode}
+            onSelectMode={handleSelectPresentationMode}
+            onNavigatePage={(page) => navigateTo(page)}
             onSelectCoordinates={handleSelectCountryOrHotspot}
           />
           <MetricsBanner
@@ -273,16 +318,18 @@ export function App() {
           />
         </div>
 
-        {/* Center Main Section: Climate Layers Panel (Left) & Latest Events Panel (Right) */}
-        <div className="w-full flex-1 flex items-center justify-between px-4 min-h-0 pointer-events-none relative">
-          {/* Left Panel: Climate Layers */}
-          <div className="pointer-events-auto my-auto">
-            <ClimateLayersPanel
-              layers={layerState}
-              onToggleLayer={handleToggleLayer}
-              onOpenSourceModal={() => navigateTo('datasources')}
-            />
-          </div>
+        {/* Center Main Section: Adaptive based on Mode */}
+        <div className="w-full flex-1 flex items-center justify-between px-3 sm:px-5 min-h-0 pointer-events-none relative">
+          {/* Left Panel: Climate Layers (Visible in 'global' & 'events' modes) */}
+          {(presentationMode === 'global' || presentationMode === 'events') && (
+            <div className="pointer-events-auto my-auto animate-fadeIn">
+              <ClimateLayersPanel
+                layers={layerState}
+                onToggleLayer={handleToggleLayer}
+                onOpenSourceModal={() => navigateTo('datasources')}
+              />
+            </div>
+          )}
 
           {/* Center Floating Controls (Zoom +/-, Earth Alignment & Near-Real-Time Pill) */}
           <GlobeFloatingControls
@@ -293,21 +340,46 @@ export function App() {
             isRefreshing={isLoadingLive}
           />
 
-          {/* Right Panel: Latest Events */}
-          <div className="pointer-events-auto my-auto">
-            <LatestEventsPanel
-              onSelectEvent={handleSelectDisplayEvent}
-              onViewAll={() => navigateTo('datasources')}
-              fireClusters={fireClusters}
-              cyclones={cyclones}
-              isLoading={isLoadingLive}
-            />
-          </div>
+          {/* Right Panel: Latest Events (Visible in 'global' and 'events' modes) */}
+          {(presentationMode === 'global' || presentationMode === 'events') && (
+            <div className="pointer-events-auto my-auto animate-fadeIn">
+              <LatestEventsPanel
+                onSelectEvent={handleSelectDisplayEvent}
+                onViewAll={() => navigateTo('datasources')}
+                fireClusters={fireClusters}
+                cyclones={cyclones}
+                isLoading={isLoadingLive}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Bottom Section: Climate Encyclopedia Banner (~75%) & Sponsored Partner Banner (~25%) */}
-        <div className="w-full pointer-events-auto">
-          <BottomBanners onOpenWiki={handleOpenWiki} />
+        {/* Bottom Section: Dynamic Mode-Specific Presentation Deck */}
+        <div className="w-full pointer-events-auto px-3 sm:px-5 pb-3">
+          {/* MODE 1: HISTORY (01 — HOW HAS EARTH CHANGED?) */}
+          {presentationMode === 'history' && (
+            <div className="animate-fadeIn">
+              <ClimateHistoryPanel
+                selectedYear={selectedYear}
+                onYearChange={(yr) => setSelectedYear(yr)}
+              />
+            </div>
+          )}
+
+          {/* MODE 2: COUNTRIES (02 — WHERE IS IT CHANGING?) */}
+          {presentationMode === 'countries' && (
+            <div className="animate-fadeIn">
+              <CountrySelectorBar
+                selectedCountryId={activeCountryProfile?.id}
+                onSelectCountry={handleSelectCountryFromBar}
+              />
+            </div>
+          )}
+
+          {/* DEFAULT / GLOBAL MODE: Climate Encyclopedia & Data Freshness Banners */}
+          {(presentationMode === 'global' || presentationMode === 'events' || presentationMode === 'evidence') && (
+            <BottomBanners onOpenWiki={handleOpenWiki} />
+          )}
         </div>
       </div>
 
@@ -320,19 +392,22 @@ export function App() {
         onClose={() => setIsFreshnessOpen(false)}
       />
 
-      {/* 5-Stage Scientific Attribution Card */}
+      {/* 5-Stage Scientific Attribution Card (for FIRMS & NOAA items) */}
       <ScientificAttributionCard
         event={selectedAttributionItem}
         onClose={() => setSelectedAttributionItem(null)}
         onDrillDownCluster={handleDrillDownCluster}
       />
 
-      {/* Scientific Country & Tipping Point Dossier */}
+      {/* Scientific Country & Tipping Point 2-Pillar Dossier */}
       <ScientificDossier
         country={activeCountryProfile}
         tippingPoint={activeTippingPoint}
-        onClose={() => setSelectedEntity(null)}
-        defaultTab="drivers"
+        onClose={() => {
+          setSelectedEntity(null);
+          setSelectedCountryProfile(null);
+        }}
+        defaultTab="contribution"
       />
     </div>
   );

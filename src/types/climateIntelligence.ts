@@ -204,6 +204,16 @@ export interface ScientificCountryProfile {
   totalEmissionsGt: number;
   emissionsSource: string;
   emissionsPerCapitaTonnes: number;
+  // Pillar 1: Cumulative Historical Contribution
+  cumulativeEmissionsGt?: number;
+  cumulativeSharePercent?: number;
+  cumulativeSource?: string;
+  // Pillar 2: Observed Climate Exposure & Vulnerability
+  ndGainVulnerabilityScore?: number; // Lower score = lower vulnerability or ND-GAIN index (0-100)
+  ndGainRank?: string;              // e.g. "128 of 185 countries"
+  regionalWarmingRate?: string;     // e.g. "1.5x global rate"
+  vulnerabilityCategory?: 'Extreme' | 'High' | 'Moderate' | 'Low';
+  attributionGuardrail?: string;
   parisStatus: string;
   parisAssessmentSource: string;
   drivers: AttributedDriver[];
@@ -211,3 +221,4 @@ export interface ScientificCountryProfile {
   keyObservation: string;
   academicCitation: string;
 }
+
