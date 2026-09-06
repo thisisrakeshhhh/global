@@ -70,7 +70,7 @@ export const ClimateEncyclopediaPage: React.FC<ClimateEncyclopediaPageProps> = (
   }, [activeArticleId, filteredArticles]);
 
   return (
-    <div className="min-h-screen bg-[#070b12] text-slate-200 font-sans selection:bg-slate-700 selection:text-white pb-24">
+    <div className="w-full min-h-screen overflow-y-auto bg-[#070b12] text-slate-200 font-sans selection:bg-slate-700 selection:text-white pb-24">
       {/* Top Quiet Header */}
       <header className="sticky top-0 z-40 bg-[#070b12]/95 backdrop-blur-md border-b border-slate-800/60 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">

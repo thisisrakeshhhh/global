@@ -73,7 +73,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBackToGlobe 
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="w-full min-h-screen overflow-y-auto bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500 selection:text-white pb-16">
       {/* Header Bar */}
       <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
         <button
