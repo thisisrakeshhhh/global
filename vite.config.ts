@@ -16,6 +16,11 @@ export default defineConfig({
         target: 'https://firms.modaps.eosdis.nasa.gov',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/firms/, '')
+      },
+      '/api/nhc': {
+        target: 'https://www.nhc.noaa.gov',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/nhc/, '')
       }
     }
   }

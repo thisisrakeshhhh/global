@@ -106,22 +106,30 @@ export async function ingestNASAFIRMS(sensorFilter: 'ALL' | 'VIIRS' | 'MODIS' = 
     };
   }
 
+  const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
   // NASA FIRMS public feeds (MODIS Terra/Aqua, VIIRS NOAA-20 & NOAA-21)
   const feeds = [
     {
       sensor: 'MODIS',
       name: 'Terra/Aqua MODIS C6.1',
-      url: 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
+      url: isLocalDev
+        ? '/api/firms/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
+        : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
     },
     {
       sensor: 'VIIRS',
       name: 'NOAA-20 VIIRS C2',
-      url: 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv'
+      url: isLocalDev
+        ? '/api/firms/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv'
+        : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv'
     },
     {
       sensor: 'VIIRS',
       name: 'NOAA-21 VIIRS C2',
-      url: 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv'
+      url: isLocalDev
+        ? '/api/firms/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv'
+        : 'https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv'
     }
   ];
 
@@ -335,9 +343,11 @@ export async function ingestNOAACyclones(): Promise<{
   let latestAdvisoryUtc = '';
 
   try {
+    const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
     const nhcFeeds = [
-      { basin: 'Atlantic', url: 'https://www.nhc.noaa.gov/index-at.xml' },
-      { basin: 'Eastern Pacific', url: 'https://www.nhc.noaa.gov/index-ep.xml' }
+      { basin: 'Atlantic', url: isLocalDev ? '/api/nhc/index-at.xml' : 'https://www.nhc.noaa.gov/index-at.xml' },
+      { basin: 'Eastern Pacific', url: isLocalDev ? '/api/nhc/index-ep.xml' : 'https://www.nhc.noaa.gov/index-ep.xml' }
     ];
 
     for (const feed of nhcFeeds) {
