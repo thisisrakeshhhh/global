@@ -37,9 +37,36 @@ import { TippingPoint } from './data/tippingPoints';
 
 type PageRoute = 'globe' | 'methodology' | 'datasources' | 'about' | 'privacy' | 'terms' | 'contact' | 'wiki';
 
+function getInitialRoute(): PageRoute {
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname.replace(/^\//, '').toLowerCase();
+    if (path === 'wiki' || path === 'encyclopedia') return 'wiki';
+    if (path === 'methodology') return 'methodology';
+    if (path === 'datasources') return 'datasources';
+    if (['about', 'privacy', 'terms', 'contact'].includes(path)) return path as PageRoute;
+  }
+  return 'globe';
+}
+
 export function App() {
-  // Navigation & Active View
-  const [activeRoute, setActiveRoute] = useState<PageRoute>('globe');
+  // Navigation & Active View with deep URL support
+  const [activeRoute, setActiveRoute] = useState<PageRoute>(getInitialRoute);
+
+  const navigateTo = useCallback((route: PageRoute) => {
+    setActiveRoute(route);
+    if (typeof window !== 'undefined') {
+      const newPath = route === 'globe' ? '/' : `/${route}`;
+      window.history.pushState({ route }, '', newPath);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveRoute(getInitialRoute());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Core Earth & Time States
   const [timeDomain, setTimeDomain] = useState<TimeDomain>('live');
@@ -140,18 +167,18 @@ export function App() {
 
   // Substantive Pages Navigation Render
   if (activeRoute === 'wiki') {
-    return <ClimateEncyclopediaPage onBackToGlobe={() => setActiveRoute('globe')} />;
+    return <ClimateEncyclopediaPage onBackToGlobe={() => navigateTo('globe')} />;
   }
   if (activeRoute === 'methodology') {
-    return <MethodologyPage onBackToGlobe={() => setActiveRoute('globe')} />;
+    return <MethodologyPage onBackToGlobe={() => navigateTo('globe')} />;
   }
   if (activeRoute === 'datasources') {
-    return <DataSourcesPage onBackToGlobe={() => setActiveRoute('globe')} />;
+    return <DataSourcesPage onBackToGlobe={() => navigateTo('globe')} />;
   }
   if (activeRoute === 'about' || activeRoute === 'privacy' || activeRoute === 'terms' || activeRoute === 'contact') {
     return (
       <LegalPages
-        onBackToGlobe={() => setActiveRoute('globe')}
+        onBackToGlobe={() => navigateTo('globe')}
         initialTab={activeRoute as 'about' | 'privacy' | 'terms' | 'contact'}
       />
     );
@@ -224,10 +251,10 @@ export function App() {
         }}
         onRefreshTelemetry={loadTelemetry}
         isLoadingLive={isLoadingLive}
-        onOpenWiki={() => setActiveRoute('wiki')}
-        onOpenMethodology={() => setActiveRoute('methodology')}
-        onOpenDataSources={() => setActiveRoute('datasources')}
-        onOpenAbout={() => setActiveRoute('about')}
+        onOpenWiki={() => navigateTo('wiki')}
+        onOpenMethodology={() => navigateTo('methodology')}
+        onOpenDataSources={() => navigateTo('datasources')}
+        onOpenAbout={() => navigateTo('about')}
         activeSensorFilter={sensorFilter}
         onSelectSensorFilter={(sf) => setSensorFilter(sf)}
         clusterCount={fireClusters.length}
